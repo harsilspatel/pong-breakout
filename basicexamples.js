@@ -151,7 +151,7 @@ function drawRect(svg) {
 function drawAndDragRectsObservable() {
     const svg = document.getElementById("drawAndDragRects");
     drawRect(svg)
-        .map(elem => dragRect(svg, elem).subscribe(() => { }))
+        .flatMap(elem => dragRect(svg, elem))
         .subscribe(() => { });
 }
 if (typeof window != 'undefined')

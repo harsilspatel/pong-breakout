@@ -345,7 +345,9 @@ function drawAndDragRectsObservable() {
   // that can be composed together to make drawAndDragRectsObservable almost trivial.
   const svg = document.getElementById("drawAndDragRects")!;
   drawRect(svg)
-    .map(elem => dragRect(svg, elem).subscribe(() => {}))
+    // .map(elem => dragRect(svg, elem).subscribe(() => {}))
+    // .subscribe(() => {})
+    .flatMap(elem => dragRect(svg, elem))
     .subscribe(() => {})
 
 

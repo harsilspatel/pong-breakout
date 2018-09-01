@@ -1,13 +1,25 @@
 "use strict";
 function pong() {
     const svg = document.getElementById("canvas");
-    let rect = new Elem(svg, 'rect')
-        .attr('x', 100).attr('y', 70)
-        .attr('width', 120).attr('height', 80)
+    let leftPaddle = new Elem(svg, 'rect')
+        .attr('x', 30).attr('y', 70)
+        .attr('width', 20).attr('height', 120)
         .attr('fill', '#FFFFFF');
     Observable.interval(10)
         .takeUntil(Observable.interval(1000))
-        .subscribe(() => rect.attr('x', 1 + Number(rect.attr('x'))));
+        .subscribe(() => leftPaddle.attr('y', 1 + Number(leftPaddle.attr('y'))));
+    let rightPaddle = new Elem(svg, 'rect')
+        .attr('x', 900 - 30 - 20).attr('y', 70)
+        .attr('width', 20).attr('height', 120)
+        .attr('fill', '#FFFFFF');
+    controlPaddleObservable(rightPaddle);
+}
+function controlPaddleObservable(paddle) {
+    const svg = document.getElementById("canvas"), o = Observable
+        .fromEvent(svg, "mousemove")
+        .map(({ clientX, clientY }) => ({ x: clientX, y: clientY }))
+        .filter(({ x, y }) => (y + parseInt(paddle.attr('height')) <= parseInt(svg.getAttribute('height'))))
+        .subscribe(({ x, y }) => paddle.attr('y', y));
 }
 if (typeof window != 'undefined')
     window.onload = () => {
