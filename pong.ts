@@ -13,6 +13,11 @@ function pong() {
   // Explain which ideas you have used ideas from the lectures to 
   // create reusable, generic functions.
 
+  var score1 = 0,
+    score2 = 0,
+    ySpeed = 2,
+    xSpeed = 2;
+
   const svg = document.getElementById("canvas")!;
   let leftPaddle = new Elem(svg, 'rect')
     .attr('x', 30).attr('y', 70)
@@ -39,7 +44,7 @@ function pong() {
   .attr('fill', '#FFFFFF');
 
   const ballOberservable = Observable.interval(1)
-    .takeUntil(Observable.interval(2100))
+    .takeUntil(Observable.interval(5000))
     .map(() => ({
       x: Number(ball.attr('cx')),
       y: Number(ball.attr('cy')),
@@ -50,19 +55,26 @@ function pong() {
   //   .subscribe(({xSpeed}) => ball.attr('cx', xSpeed+Number(ball.attr('cx'))));
 
   ballOberservable.filter(({x,r}) => ((x + r) < svg.getBoundingClientRect().right - svg.getBoundingClientRect().left))
-    .map(({x,r}) => (ball.attr('cx', 2+(x))))
-    .subscribe(() => console.log('completed', ball.attr('cx'), ball.attr('cy')))
+    .subscribe(({x,r}) => (ball.attr('cx', 2+(x))))
 
-  ballOberservable.filter(({y,r}) => ((y + r) < svg.getBoundingClientRect().bottom - svg.getBoundingClientRect().top))
-    .subscribe(({y}) => (ball.attr('cy', 2+y)))
+  ballOberservable.map(({y,r}) => ({y,r,
+    bottomBound: svg.getBoundingClientRect().bottom - svg.getBoundingClientRect().top}))
+    .filter(({y,r,bottomBound}) => (0 < (y - r)) && ((y + r) < bottomBound))
+    .map(({y,r,bottomBound}) => ((y + r) == bottomBound-1) || ((y - r) == 0 + 1)? (ySpeed=-1*ySpeed): (ySpeed))
+    //     isMovingDown = false;
+    //     return {y,ySpeed: -2}
+    //   } else {
+    //     return {y,ySpeed: 2}
+    //   })
+    .subscribe(({}) => (ball.attr('cy', Number(ball.attr('cy'))+ySpeed)))
 
+    
     console.log(svg.getBoundingClientRect().top)
     console.log(svg.getBoundingClientRect().bottom)
     console.log(svg.getBoundingClientRect().left)
     console.log(svg.getBoundingClientRect().right)
 
-  // let score1 = 0,
-  //   score2 = 0;
+  
 
 
 }
@@ -83,11 +95,11 @@ function controlPaddleObservable(paddle: Elem): void {
 if (typeof window != 'undefined')
   window.onload = ()=>{
     pong();
-    mousePosObservable();
+    mousePosObservable2();
   }
  
 
-  function mousePosObservable() {
+  function mousePosObservable2() {
     const 
       pos = document.getElementById("pos")!,
       o = Observable
