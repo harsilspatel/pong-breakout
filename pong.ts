@@ -33,13 +33,13 @@ function pong() {
   controlPaddleObservable(rightPaddle);
 
   let ball = new Elem(svg, 'circle')
-  .attr('cx', 500)
+  .attr('cx', 650)
   .attr('cy', 300)
   .attr('r', 7)
   .attr('fill', '#FFFFFF');
 
   const ballOberservable = Observable.interval(1)
-    .takeUntil(Observable.interval(2000))
+    .takeUntil(Observable.interval(2100))
     .map(() => ({
       x: Number(ball.attr('cx')),
       y: Number(ball.attr('cy')),
@@ -49,11 +49,20 @@ function pong() {
   // ballOberservable.filter(({x}) => Number(ball.attr('cx')) + 2*Number(ball.attr('r')) <= Number(svg.getBoundingClientRect().right))
   //   .subscribe(({xSpeed}) => ball.attr('cx', xSpeed+Number(ball.attr('cx'))));
 
-  ballOberservable.filter(({x,r}) => ((x+r) < svg.getBoundingClientRect().right))
-    .subscribe(({x}) => (ball.attr('cx', 2+x)))
+  ballOberservable.filter(({x,r}) => ((x + r) < svg.getBoundingClientRect().right - svg.getBoundingClientRect().left))
+    .map(({x,r}) => (ball.attr('cx', 2+(x))))
+    .subscribe(() => console.log('completed', ball.attr('cx'), ball.attr('cy')))
 
-  let score1 = 0,
-    score2 = 0;
+  ballOberservable.filter(({y,r}) => ((y + r) < svg.getBoundingClientRect().bottom - svg.getBoundingClientRect().top))
+    .subscribe(({y}) => (ball.attr('cy', 2+y)))
+
+    console.log(svg.getBoundingClientRect().top)
+    console.log(svg.getBoundingClientRect().bottom)
+    console.log(svg.getBoundingClientRect().left)
+    console.log(svg.getBoundingClientRect().right)
+
+  // let score1 = 0,
+  //   score2 = 0;
 
 
 }
@@ -74,8 +83,23 @@ function controlPaddleObservable(paddle: Elem): void {
 if (typeof window != 'undefined')
   window.onload = ()=>{
     pong();
+    mousePosObservable();
   }
-
  
 
- 
+  function mousePosObservable() {
+    const 
+      pos = document.getElementById("pos")!,
+      o = Observable
+            .fromEvent<MouseEvent>(document, "mousemove")
+            .map(({clientX, clientY})=>({x: clientX, y: clientY}));
+  
+    o.map(({x,y}) => `${x},${y}`)
+      .subscribe(s => pos.innerHTML = s);
+  
+    o.filter(({x}) => x > 400)
+      .subscribe(_ => pos.classList.add('highlight'));
+  
+    o.filter(({x}) => x <= 400)
+      .subscribe(_ => pos.classList.remove('highlight'));
+  }
