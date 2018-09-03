@@ -15,9 +15,9 @@ function pong() {
 
   var score1 = 0,
     score2 = 0,
-    ySpeed = 0.5,
-    xSpeed = 0.5,
-    rounds = 5;
+    ySpeed = 1,
+    xSpeed = 1,
+    gameRounds = 5;
 
   const svg = document.getElementById("canvas")!;
   let leftPaddle = new Elem(svg, 'rect')
@@ -46,7 +46,7 @@ function pong() {
   .attr('r', 7)
   .attr('fill', '#FFFFFF');
 
-  const ballInterval = Observable.interval(1)
+  const ballInterval = Observable.interval(10)
   .map(() => ({
     x: Number(ball.attr('cx')),
     y: Number(ball.attr('cy')),
@@ -55,7 +55,7 @@ function pong() {
 
   // (x + r) > svg.getBoundingClientRect().right - svg.getBoundingClientRect().left
   const ballOberservable = ballInterval
-    .takeUntil(ballInterval.filter(({x,y,r}) => (x-r < 0) || (x + r) > svg.getBoundingClientRect().right - svg.getBoundingClientRect().left ))
+    .takeUntil(ballInterval.filter(({x,y,r}) => (x-r < 0) || (x + r) > svg.getBoundingClientRect().right - svg.getBoundingClientRect().left || score1 == gameRounds || score2 == gameRounds))
     .map(() => ({
       x: Number(ball.attr('cx')),
       y: Number(ball.attr('cy')),
@@ -84,13 +84,14 @@ function pong() {
     .subscribe(({}) => (ball.attr('cy', ySpeed+Number(ball.attr('cy')))))
 
   ballOberservable
-  .map(({x,y,r}) => (x-r == 0+1) ? document.getElementById("score")!.innerHTML = `${score1},${++score2}` : true)
+  .map(({x,y,r}) => (x-r == 0+1) ? updateAndReset(score1, ++score2, ball) : true)
   .map(() => ({
     x: Number(ball.attr('cx')),
     y: Number(ball.attr('cy')),
     r: Number(ball.attr('r'))
   }))
-  .map(({x,y,r}) => (x + r) == svg.getBoundingClientRect().right - svg.getBoundingClientRect().left ? document.getElementById("score")!.innerHTML = `${++score1},${score2}` : true)
+  .map(({x,y,r}) => (x + r) == svg.getBoundingClientRect().right - svg.getBoundingClientRect().left ? updateAndReset(++score1, score2, ball) : true)
+  .map(_ => score1 == gameRounds || score2 == gameRounds? endGame(score1, score2) : true)
   .subscribe(_ => {})
     // .map(_ => console.log('bhenchod, score2'))
     // .subscribe(_ => document.getElementById("score")!.innerHTML = `${score1},${score2}`)
@@ -100,6 +101,18 @@ function pong() {
     // .map(_ => console.log('bhenchod, score1'))
     // .subscribe(_ => document.getElementById("score")!.innerHTML = `${score1},${score2}`)
 
+}
+
+function endGame(score1: Number, score2: Number){
+  score2 == 5 ?
+    console.log("Congratulations player2") :
+    console.log("Congratulations player1")
+}
+
+function updateAndReset(score1: Number, score2: Number, ball: Elem) {
+  const score = document.getElementById("score")!;
+  score.innerHTML = `${score1},${score2}`;
+  ball.attr('cx', 450).attr('cy', 300)
 }
 
 function controlPaddleObservable(paddle: Elem): void {
