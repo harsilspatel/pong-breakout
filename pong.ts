@@ -16,29 +16,57 @@ function pong() {
   const svg = document.getElementById("canvas")!;
   let leftPaddle = new Elem(svg, 'rect')
     .attr('x', 30).attr('y', 70)
-    .attr('width', 20).attr('height', 120)
+    .attr('width', 10).attr('height', 120)
     .attr('fill', '#FFFFFF');
 
-    Observable.interval(10)
+  Observable.interval(10)
     .takeUntil(Observable.interval(1000))
-    .subscribe(()=>leftPaddle.attr('y', 1+Number(leftPaddle.attr('y'))));
+    .subscribe(() => leftPaddle.attr('y', 1+Number(leftPaddle.attr('y'))));
 
-    let rightPaddle = new Elem(svg, 'rect')
-    .attr('x', 900-30-20).attr('y', 70)
-    .attr('width', 20).attr('height', 120)
+  let rightPaddle = new Elem(svg, 'rect')
+    .attr('x', 900-30-10) //canvas - distanceFromCanvas - width
+    .attr('y', 70)
+    .attr('width', 10)
+    .attr('height', 120)
     .attr('fill', '#FFFFFF');
 
-    controlPaddleObservable(rightPaddle);
+  controlPaddleObservable(rightPaddle);
+
+  let ball = new Elem(svg, 'circle')
+  .attr('cx', 500)
+  .attr('cy', 300)
+  .attr('r', 7)
+  .attr('fill', '#FFFFFF');
+
+  const ballOberservable = Observable.interval(1)
+    .takeUntil(Observable.interval(2000))
+    .map(() => ({
+      x: Number(ball.attr('cx')),
+      y: Number(ball.attr('cy')),
+      r: Number(ball.attr('r'))
+    }));
+
+  // ballOberservable.filter(({x}) => Number(ball.attr('cx')) + 2*Number(ball.attr('r')) <= Number(svg.getBoundingClientRect().right))
+  //   .subscribe(({xSpeed}) => ball.attr('cx', xSpeed+Number(ball.attr('cx'))));
+
+  ballOberservable.filter(({x,r}) => ((x+r) < svg.getBoundingClientRect().right))
+    .subscribe(({x}) => (ball.attr('cx', 2+x)))
+
+  let score1 = 0,
+    score2 = 0;
+
 
 }
 
 function controlPaddleObservable(paddle: Elem): void {
   const
     svg = document.getElementById("canvas")!,
+    svgTop = svg.getBoundingClientRect().top,
     o = Observable
           .fromEvent<MouseEvent>(svg, "mousemove")
-          .map(({clientX, clientY})=>({x: clientX, y: clientY}))
-          .filter(({x,y}) => (y + parseInt(paddle.attr('height')) <= parseInt(svg.getAttribute('height')!)))
+          .map(({clientX, clientY})=>({x: clientX, y: clientY - svgTop - parseInt(paddle.attr('height'))/2}))
+          .filter(({x,y}) => 0 <= y) //for upperBound
+          .filter(({x,y}) => (y + parseInt(paddle.attr('height')) <= parseInt(svg.getAttribute('height')!))) //for lowerBound
           .subscribe(({x,y}) => paddle.attr('y', y));
 }
 
