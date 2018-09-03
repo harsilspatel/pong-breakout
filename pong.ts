@@ -15,13 +15,14 @@ function pong() {
 
   var score1 = 0,
     score2 = 0,
-    ySpeed = 1,
-    xSpeed = 1;
+    ySpeed = 0.5,
+    xSpeed = 0.5,
+    rounds = 5;
 
   const svg = document.getElementById("canvas")!;
   let leftPaddle = new Elem(svg, 'rect')
     .attr('x', 30)
-    .attr('y', 40)
+    .attr('y', 80)
     .attr('width', 10)
     .attr('height', 120)
     .attr('fill', '#FFFFFF');
@@ -45,8 +46,16 @@ function pong() {
   .attr('r', 7)
   .attr('fill', '#FFFFFF');
 
-  const ballOberservable = Observable.interval(1)
-    .takeUntil(Observable.interval(10000))
+  const ballInterval = Observable.interval(1)
+  .map(() => ({
+    x: Number(ball.attr('cx')),
+    y: Number(ball.attr('cy')),
+    r: Number(ball.attr('r'))
+  }));
+
+  // (x + r) > svg.getBoundingClientRect().right - svg.getBoundingClientRect().left
+  const ballOberservable = ballInterval
+    .takeUntil(ballInterval.filter(({x,y,r}) => (x-r < 0) || (x + r) > svg.getBoundingClientRect().right - svg.getBoundingClientRect().left ))
     .map(() => ({
       x: Number(ball.attr('cx')),
       y: Number(ball.attr('cy')),
@@ -56,7 +65,8 @@ function pong() {
   // ballOberservable.filter(({x}) => Number(ball.attr('cx')) + 2*Number(ball.attr('r')) <= Number(svg.getBoundingClientRect().right))
   //   .subscribe(({xSpeed}) => ball.attr('cx', xSpeed+Number(ball.attr('cx'))));
 
-  ballOberservable.filter(({x,y,r}) => ((x + r) < svg.getBoundingClientRect().right - svg.getBoundingClientRect().left))
+  ballOberservable
+  // .filter(({x,y,r}) => ((x + r) < svg.getBoundingClientRect().right - svg.getBoundingClientRect().left))
     .map(({x,y,r}) => //if x coordinates for ball and right paddle are same and cy is between the edges of paddle then reverse the direction
     (x+r == Number(rightPaddle.attr('x')) && 
       (Number(rightPaddle.attr('y'))<=y && 
@@ -73,14 +83,22 @@ function pong() {
     .map(({y,r,bottomBound}) => ((y + r) == bottomBound-1) || ((y - r) == 0+1) ? (ySpeed=-1*ySpeed): (ySpeed))
     .subscribe(({}) => (ball.attr('cy', ySpeed+Number(ball.attr('cy')))))
 
-    
-    console.log(svg.getBoundingClientRect().top)
-    console.log(svg.getBoundingClientRect().bottom)
-    console.log(svg.getBoundingClientRect().left)
-    console.log(svg.getBoundingClientRect().right)
-
+  ballOberservable
+  .map(({x,y,r}) => (x-r == 0+1) ? document.getElementById("score")!.innerHTML = `${score1},${++score2}` : true)
+  .map(() => ({
+    x: Number(ball.attr('cx')),
+    y: Number(ball.attr('cy')),
+    r: Number(ball.attr('r'))
+  }))
+  .map(({x,y,r}) => (x + r) == svg.getBoundingClientRect().right - svg.getBoundingClientRect().left ? document.getElementById("score")!.innerHTML = `${++score1},${score2}` : true)
+  .subscribe(_ => {})
+    // .map(_ => console.log('bhenchod, score2'))
+    // .subscribe(_ => document.getElementById("score")!.innerHTML = `${score1},${score2}`)
   
-
+  // ballOberservable
+  //   .map(({x,y,r}) => (x + r) == svg.getBoundingClientRect().right - svg.getBoundingClientRect().left ? document.getElementById("score")!.innerHTML = `${++score1},${score2}` : true)
+    // .map(_ => console.log('bhenchod, score1'))
+    // .subscribe(_ => document.getElementById("score")!.innerHTML = `${score1},${score2}`)
 
 }
 
