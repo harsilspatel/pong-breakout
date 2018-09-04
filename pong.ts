@@ -15,8 +15,8 @@ function pong() {
 
   var score1 = 0,
     score2 = 0,
-    ySpeed = 1,
-    xSpeed = 1,
+    ySpeed = 5,
+    xSpeed = 5,
     gameRounds = 5;
 
   const svg = document.getElementById("canvas")!;
@@ -26,10 +26,6 @@ function pong() {
     .attr('width', 10)
     .attr('height', 120)
     .attr('fill', '#FFFFFF');
-
-  Observable.interval(10)
-    .takeUntil(Observable.interval(1000))
-    .subscribe(() => leftPaddle.attr('y', 1+Number(leftPaddle.attr('y'))));
 
   let rightPaddle = new Elem(svg, 'rect')
     .attr('x', 900-30-10) //canvas - distanceFromCanvas - width
@@ -53,63 +49,62 @@ function pong() {
     r: Number(ball.attr('r'))
   }));
 
-  // (x + r) > svg.getBoundingClientRect().right - svg.getBoundingClientRect().left
   const ballOberservable = ballInterval
-    .takeUntil(ballInterval.filter(({x,y,r}) => (x-r < 0) || (x + r) > svg.getBoundingClientRect().right - svg.getBoundingClientRect().left || score1 == gameRounds || score2 == gameRounds))
+    .takeUntil(ballInterval.filter(({x,y,r}) => score1 == gameRounds || score2 == gameRounds))
     .map(() => ({
       x: Number(ball.attr('cx')),
       y: Number(ball.attr('cy')),
       r: Number(ball.attr('r'))
     }));
 
-  // ballOberservable.filter(({x}) => Number(ball.attr('cx')) + 2*Number(ball.attr('r')) <= Number(svg.getBoundingClientRect().right))
-  //   .subscribe(({xSpeed}) => ball.attr('cx', xSpeed+Number(ball.attr('cx'))));
-
+    // making the ball collide the paddles
   ballOberservable
-  // .filter(({x,y,r}) => ((x + r) < svg.getBoundingClientRect().right - svg.getBoundingClientRect().left))
     .map(({x,y,r}) => //if x coordinates for ball and right paddle are same and cy is between the edges of paddle then reverse the direction
-    (x+r == Number(rightPaddle.attr('x')) && 
+    (x+r >= Number(rightPaddle.attr('x')) && 
       (Number(rightPaddle.attr('y'))<=y && 
         y <= (Number(rightPaddle.attr('y')) + Number(rightPaddle.attr('height'))))) ||
-    (x-r == Number(leftPaddle.attr('x')) + Number(leftPaddle.attr('width')) && 
+    (x-r <= Number(leftPaddle.attr('x')) + Number(leftPaddle.attr('width')) && 
       (Number(leftPaddle.attr('y')) <= y && 
         y <= (Number(leftPaddle.attr('y')) + Number(leftPaddle.attr('height'))))) ? 
           (xSpeed= -1*xSpeed) : (xSpeed))
     .subscribe(() => (ball.attr('cx', xSpeed+Number(ball.attr('cx')))))
 
+    // making left paddle track the ball
+  ballOberservable
+    .filter(({y}) => 0 <= y - Number(leftPaddle.attr('height'))/2 && y + Number(leftPaddle.attr('height'))/2 <= svg.getBoundingClientRect().bottom - svg.getBoundingClientRect().top)
+    // .filter(({y}) => 0 <= Number(leftPaddle.attr('y')) && Number(leftPaddle.attr('y')) + Number(leftPaddle.attr('height')) <= svg.getBoundingClientRect().bottom - svg.getBoundingClientRect().top)
+    .map(({y}) => leftPaddle.attr('y', y - Number(leftPaddle.attr('height'))/2))
+    .subscribe(_=> ({}))
+
+    // making the ball collide the top and bottom boundaries
   ballOberservable.map(({y,r}) => ({y,r,
     bottomBound: svg.getBoundingClientRect().bottom - svg.getBoundingClientRect().top}))
-    .filter(({y,r,bottomBound}) => (0 < (y - r)) && ((y + r) < bottomBound))
-    .map(({y,r,bottomBound}) => ((y + r) == bottomBound-1) || ((y - r) == 0+1) ? (ySpeed=-1*ySpeed): (ySpeed))
+    // .filter(({y,r,bottomBound}) => (0 < (y - r)) && ((y + r) < bottomBound))
+    .map(({y,r,bottomBound}) => (bottomBound <= y + r) || (y - r <= 0) ? (ySpeed=-1*ySpeed): (ySpeed))
     .subscribe(({}) => (ball.attr('cy', ySpeed+Number(ball.attr('cy')))))
 
+    // resetting the game 
   ballOberservable
-  .map(({x,y,r}) => (x-r == 0+1) ? updateAndReset(score1, ++score2, ball) : true)
+  .map(({x,y,r}) => (x - r + xSpeed <= 0) ? updateAndReset(score1, ++score2, ball) : true)
   .map(() => ({
     x: Number(ball.attr('cx')),
     y: Number(ball.attr('cy')),
     r: Number(ball.attr('r'))
   }))
-  .map(({x,y,r}) => (x + r) == svg.getBoundingClientRect().right - svg.getBoundingClientRect().left ? updateAndReset(++score1, score2, ball) : true)
+  .map(({x,y,r}) => (x + r - xSpeed) >= svg.getBoundingClientRect().right - svg.getBoundingClientRect().left ? updateAndReset(++score1, score2, ball) : true)
   .map(_ => score1 == gameRounds || score2 == gameRounds? endGame(score1, score2) : true)
   .subscribe(_ => {})
-    // .map(_ => console.log('bhenchod, score2'))
-    // .subscribe(_ => document.getElementById("score")!.innerHTML = `${score1},${score2}`)
-  
-  // ballOberservable
-  //   .map(({x,y,r}) => (x + r) == svg.getBoundingClientRect().right - svg.getBoundingClientRect().left ? document.getElementById("score")!.innerHTML = `${++score1},${score2}` : true)
-    // .map(_ => console.log('bhenchod, score1'))
-    // .subscribe(_ => document.getElementById("score")!.innerHTML = `${score1},${score2}`)
-
 }
 
 function endGame(score1: Number, score2: Number){
+  const score = document.getElementById("score")!
   score2 == 5 ?
-    console.log("Congratulations player2") :
-    console.log("Congratulations player1")
+    score.innerHTML = "Congratulations player2" :
+    score.innerHTML = "Congratulations player1"
 }
 
 function updateAndReset(score1: Number, score2: Number, ball: Elem) {
+  console.log('resetted the game!')
   const score = document.getElementById("score")!;
   score.innerHTML = `${score1},${score2}`;
   ball.attr('cx', 450).attr('cy', 300)
