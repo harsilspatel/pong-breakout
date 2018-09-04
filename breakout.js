@@ -1,12 +1,12 @@
 "use strict";
 function breakout() {
-    var bricks = 0, ySpeed = 1, xSpeed = 1, lives = 3;
+    var bricks = 0, ySpeed = 2, xSpeed = 2, lives = 3, fps = 10;
     const svg = document.getElementById("breakout");
     let paddle = new Elem(svg, 'rect')
         .attr('x', 30)
         .attr('y', 580)
         .attr('width', 120)
-        .attr('height', 10)
+        .attr('height', 3)
         .attr('fill', '#FFFFFF');
     controlPaddleObservable2(paddle);
     let ball = new Elem(svg, 'circle')
@@ -14,7 +14,7 @@ function breakout() {
         .attr('cy', 300)
         .attr('r', 7)
         .attr('fill', '#FFFFFF');
-    const ballInterval = Observable.interval(5)
+    const ballInterval = Observable.interval(fps)
         .map(() => ({
         x: Number(ball.attr('cx')),
         y: Number(ball.attr('cy')),
@@ -28,13 +28,18 @@ function breakout() {
         r: Number(ball.attr('r'))
     }));
     ballOberservable
+        .subscribe(({ x, y, r }) => (Number(paddle.attr('x')) <= x && x <= Number(paddle.attr('x')) + Number(paddle.attr('width')) &&
+        Number(paddle.attr('y')) - ySpeed <= y && y < Number(paddle.attr('y')) ? (ySpeed = -1 * ySpeed) : (ySpeed)));
+    ballOberservable
         .map(({ x, r }) => ({ x, r, rightBound: svg.getBoundingClientRect().right - svg.getBoundingClientRect().left }))
         .map(({ x, r, rightBound }) => (rightBound <= x + r) || (x - r <= 0) ? (xSpeed = -1 * xSpeed) : (xSpeed))
         .subscribe(({}) => (ball.attr('cx', xSpeed + Number(ball.attr('cx')))));
     ballOberservable
-        .map(({ y, r }) => ({ y, r, bottomBound: svg.getBoundingClientRect().bottom - svg.getBoundingClientRect().top }))
-        .map(({ y, r, bottomBound }) => (bottomBound <= y + r) || (y - r <= 0) ? (ySpeed = -1 * ySpeed) : (ySpeed))
+        .map(({ y, r }) => (y - r <= 0) ? (ySpeed = -1 * ySpeed) : (ySpeed))
         .subscribe(({}) => (ball.attr('cy', ySpeed + Number(ball.attr('cy')))));
+    ballOberservable
+        .map(({ x, y, r }) => (y + r - ySpeed) >= svg.getBoundingClientRect().bottom - svg.getBoundingClientRect().top ? updateAndReset2(--lives, ball) : true)
+        .subscribe(_ => { });
     drawRectObservable(svg)
         .map(rect => (Number(rect.attr('y')) <= Number(ball.attr('cy')) && Number(ball.attr('cy')) <= Number(rect.attr('y')) + Number(rect.attr('height')) &&
         Number(rect.attr('x')) <= Number(ball.attr('cx')) && Number(ball.attr('cx')) <= Number(rect.attr('x')) + Number(rect.attr('width')) ? svg.removeChild(rect.elem) : true))
@@ -47,10 +52,10 @@ function endGame2(score1, score2) {
         score.innerHTML = "Congratulations player2" :
         score.innerHTML = "Congratulations player1";
 }
-function updateAndReset2(score1, score2, ball) {
+function updateAndReset2(lives, ball) {
     console.log('resetted the game!');
-    const score = document.getElementById("score");
-    score.innerHTML = `${score1},${score2}`;
+    const livesLabel = document.getElementById("lives");
+    livesLabel.innerHTML = `lives: ${lives}`;
     ball.attr('cx', 450).attr('cy', 300);
 }
 function controlPaddleObservable2(paddle) {

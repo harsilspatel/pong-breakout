@@ -14,16 +14,17 @@ function breakout() {
   // create reusable, generic functions.
 
   var bricks = 0,
-    ySpeed = 1,
-    xSpeed = 1,
-    lives = 3;
+    ySpeed = 2,
+    xSpeed = 2,
+    lives = 3,
+    fps = 10;
 
   const svg = document.getElementById("breakout")!;
   let paddle = new Elem(svg, 'rect')
     .attr('x', 30)
     .attr('y', 580)
     .attr('width', 120)
-    .attr('height', 10)
+    .attr('height', 3)
     .attr('fill', '#FFFFFF');
 
   controlPaddleObservable2(paddle);
@@ -34,7 +35,7 @@ function breakout() {
   .attr('r', 7)
   .attr('fill', '#FFFFFF');
 
-  const ballInterval = Observable.interval(5)
+  const ballInterval = Observable.interval(fps)
   .map(() => ({
     x: Number(ball.attr('cx')),
     y: Number(ball.attr('cy')),
@@ -49,36 +50,26 @@ function breakout() {
       r: Number(ball.attr('r'))
     }));
 
-  // ballOberservable
-  //   .map(({x,r}) =>
-  //   (x+r >= Number(svg.getBoundingClientRect().left) - Number(svg.getBoundingClientRect().right)) || 
-  //   (x-r <= Number(svg.getBoundingClientRect().left))? 
-  //         (xSpeed= -1*xSpeed) : (xSpeed))
-  //   .subscribe(() => (ball.attr('cx', xSpeed+Number(ball.attr('cx')))))
+  ballOberservable
+  .subscribe(({x,y,r}) => (Number(paddle.attr('x')) <= x && x <= Number(paddle.attr('x')) + Number(paddle.attr('width')) &&
+                     Number(paddle.attr('y')) - ySpeed <= y && y < Number(paddle.attr('y')) ? (ySpeed=-1*ySpeed): (ySpeed)))
 
+  // making ball collide with the left and right bounds
   ballOberservable
   .map(({x,r}) => ({x,r, rightBound: svg.getBoundingClientRect().right - svg.getBoundingClientRect().left}))
     // .filter(({y,r,bottomBound}) => (0 < (y - r)) && ((y + r) < bottomBound))
     .map(({x,r,rightBound}) => (rightBound <= x + r) || (x - r <= 0) ? (xSpeed=-1*xSpeed): (xSpeed))
     .subscribe(({}) => (ball.attr('cx', xSpeed+Number(ball.attr('cx')))))
 
-    // making the ball collide the top and bottom boundaries
+    // making the ball collide the top
   ballOberservable
-  .map(({y,r}) => ({y,r, bottomBound: svg.getBoundingClientRect().bottom - svg.getBoundingClientRect().top}))
-    // .filter(({y,r,bottomBound}) => (0 < (y - r)) && ((y + r) < bottomBound))
-    .map(({y,r,bottomBound}) => (bottomBound <= y + r) || (y - r <= 0) ? (ySpeed=-1*ySpeed): (ySpeed))
+    .map(({y,r}) => (y - r <= 0) ? (ySpeed=-1*ySpeed): (ySpeed))
     .subscribe(({}) => (ball.attr('cy', ySpeed+Number(ball.attr('cy')))))
-
-  // ballOberservable
-  // .map(({x,y,r}) => (x - r + xSpeed <= 0) ? updateAndReset2(score1, ++score2, ball) : true)
-  // .map(() => ({
-  //   x: Number(ball.attr('cx')),
-  //   y: Number(ball.attr('cy')),
-  //   r: Number(ball.attr('r'))
-  // }))
-  // .map(({x,y,r}) => (x + r - xSpeed) >= svg.getBoundingClientRect().right - svg.getBoundingClientRect().left ? updateAndReset2(++score1, score2, ball) : true)
-  // .map(_ => score1 == gameRounds || score2 == gameRounds? endGame2(score1, score2) : true)
-  // .subscribe(_ => {})
+  
+    // resetting the game if ball strikes bottom
+  ballOberservable
+  .map(({x,y,r}) => (y + r - ySpeed) >= svg.getBoundingClientRect().bottom - svg.getBoundingClientRect().top ? updateAndReset2(--lives, ball) : true)
+  .subscribe(_ => {})
 
   drawRectObservable(svg)
   // .map(rect => (Number(rect.attr('y')) <= Number(ball.attr('cy')) && Number(ball.attr('cy')) <= Number(rect.attr('y')) + Number(rect.attr('height')) &&
@@ -99,10 +90,10 @@ function endGame2(score1: Number, score2: Number){
     score.innerHTML = "Congratulations player1"
 }
 
-function updateAndReset2(score1: Number, score2: Number, ball: Elem) {
+function updateAndReset2(lives: Number, ball: Elem) {
   console.log('resetted the game!')
-  const score = document.getElementById("score")!;
-  score.innerHTML = `${score1},${score2}`;
+  const livesLabel = document.getElementById("lives")!;
+  livesLabel.innerHTML = `lives: ${lives}`;
   ball.attr('cx', 450).attr('cy', 300)
 }
 
