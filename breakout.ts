@@ -13,11 +13,47 @@ function breakout() {
   // Explain which ideas you have used ideas from the lectures to 
   // create reusable, generic functions.
 
-  var bricks = 0,
-    ySpeed = 2,
+  var ySpeed = 2,
     xSpeed = 2,
-    lives = 3,
-    fps = 10;
+    lives = 1,
+    fps = 5,
+    bricks: Elem[] = [];
+
+  const bricksObservable = Observable.interval(1);
+  bricksObservable
+    .takeUntil(bricksObservable.filter(i => i == 11))
+    // .forEach((i) => console.log(i))
+    .forEach(i => (
+      bricks.push(
+      new Elem(svg, 'rect')
+      .attr('x',((i-1)*90))
+      .attr('y', 20)
+      .attr('width', 90)
+      .attr('height', 30)
+      .attr('fill', ('#' + getRandomBetween2(0+30,255-30).toString(16) + getRandomBetween2(0+30,255-30).toString(16) + getRandomBetween2(0+30,255-30).toString(16))) //16777215 being FFFFFF
+    )))
+    .forEach(i => (
+      bricks.push(
+      new Elem(svg, 'rect')
+      .attr('x',((i-1)*90))
+      .attr('y', 50)
+      .attr('width', 90)
+      .attr('height', 30)
+      .attr('fill', ('#' + getRandomBetween2(0+30,255-30).toString(16) + getRandomBetween2(0+30,255-30).toString(16) + getRandomBetween2(0+30,255-30).toString(16))) //16777215 being FFFFFF
+    )))
+    .forEach(i => (
+      bricks.push(
+      new Elem(svg, 'rect')
+      .attr('x',((i-1)*90))
+      .attr('y', 80)
+      .attr('width', 90)
+      .attr('height', 30)
+      .attr('fill', ('#' + getRandomBetween2(0+30,255-30).toString(16) + getRandomBetween2(0+30,255-30).toString(16) + getRandomBetween2(0+30,255-30).toString(16))) //16777215 being FFFFFF
+    )))
+    .subscribe(_ => {})
+    
+    
+    
 
   const svg = document.getElementById("breakout")!;
   let paddle = new Elem(svg, 'rect')
@@ -30,10 +66,12 @@ function breakout() {
   controlPaddleObservable2(paddle);
 
   let ball = new Elem(svg, 'circle')
-  .attr('cx', 650)
-  .attr('cy', 300)
+  .attr('cx', getRandomBetween2(400,500))
+  .attr('cy', getRandomBetween2(250,350))
   .attr('r', 7)
-  .attr('fill', '#FFFFFF');
+  .attr('fill', '#FFFFFF')
+  .attr('xSpeed', 1)
+  .attr('ySpeed', 1);
 
   const ballInterval = Observable.interval(fps)
   .map(() => ({
@@ -52,35 +90,43 @@ function breakout() {
 
   ballOberservable
   .subscribe(({x,y,r}) => (Number(paddle.attr('x')) <= x && x <= Number(paddle.attr('x')) + Number(paddle.attr('width')) &&
-                     Number(paddle.attr('y')) - ySpeed <= y && y < Number(paddle.attr('y')) ? (ySpeed=-1*ySpeed): (ySpeed)))
+                     Number(paddle.attr('y')) - parseInt(ball.attr('ySpeed')) +2 <= y + r && y + r < Number(paddle.attr('y')) +2 ? ball.attr('ySpeed', -1*parseInt(ball.attr('ySpeed'))): (parseInt(ball.attr('ySpeed')))))
 
   // making ball collide with the left and right bounds
   ballOberservable
   .map(({x,r}) => ({x,r, rightBound: svg.getBoundingClientRect().right - svg.getBoundingClientRect().left}))
     // .filter(({y,r,bottomBound}) => (0 < (y - r)) && ((y + r) < bottomBound))
-    .map(({x,r,rightBound}) => (rightBound <= x + r) || (x - r <= 0) ? (xSpeed=-1*xSpeed): (xSpeed))
-    .subscribe(({}) => (ball.attr('cx', xSpeed+Number(ball.attr('cx')))))
+    .map(({x,r,rightBound}) => (rightBound <= x + r) || (x - r <= 0) ? ball.attr('xSpeed', -1*parseInt(ball.attr('xSpeed'))): (parseInt(ball.attr('xSpeed'))))
+    .subscribe(({}) => (ball.attr('cx', parseInt(ball.attr('xSpeed'))+Number(ball.attr('cx')))))
 
     // making the ball collide the top
   ballOberservable
-    .map(({y,r}) => (y - r <= 0) ? (ySpeed=-1*ySpeed): (ySpeed))
-    .subscribe(({}) => (ball.attr('cy', ySpeed+Number(ball.attr('cy')))))
+    .map(({y,r}) => (y - r <= 0) ? (ball.attr('ySpeed', -1*parseInt(ball.attr('ySpeed')))): (parseInt(ball.attr('ySpeed'))))
+    .subscribe(({}) => (ball.attr('cy', parseInt(ball.attr('ySpeed'))+Number(ball.attr('cy')))))
   
     // resetting the game if ball strikes bottom
   ballOberservable
-  .map(({x,y,r}) => (y + r - ySpeed) >= svg.getBoundingClientRect().bottom - svg.getBoundingClientRect().top ? updateAndReset2(--lives, ball) : true)
+  .map(({x,y,r}) => (y + r - parseInt(ball.attr('ySpeed'))) >= svg.getBoundingClientRect().bottom - svg.getBoundingClientRect().top ? updateAndReset2(--lives, ball) : true)
   .subscribe(_ => {})
 
-  drawRectObservable(svg)
-  // .map(rect => (Number(rect.attr('y')) <= Number(ball.attr('cy')) && Number(ball.attr('cy')) <= Number(rect.attr('y')) + Number(rect.attr('height')) &&
-  //               Number(rect.attr('x')) <= Number(ball.attr('cx')) && Number(ball.attr('cx')) <= Number(rect.attr('x')) + Number(rect.attr('width')) ? console.log('bhenchod') : true))
-  
-  .map(rect => (Number(rect.attr('y')) <= Number(ball.attr('cy')) && Number(ball.attr('cy')) <= Number(rect.attr('y')) + Number(rect.attr('height')) &&
-                Number(rect.attr('x')) <= Number(ball.attr('cx')) && Number(ball.attr('cx')) <= Number(rect.attr('x')) + Number(rect.attr('width')) ? svg.removeChild(rect.elem) : true))
-  .map(_ => console.log('chodi'))
+  ballOberservable
+  .map(({x,y,r}) => bricks.forEach( brick => (
+    parseInt(brick.attr('y')) + parseInt(brick.attr('height')) == y - r + parseInt(ball.attr('ySpeed')) && parseInt(brick.attr('x')) <= x && x <= parseInt(brick.attr('x')) + parseInt(brick.attr('width')) ? removeAndReverse(bricks, brick, ball) : true
+  )))
   .subscribe(_ => {})
 
+}
 
+function removeAndReverse(bricks:[Elem], brick: Elem, ball: Elem) {
+  brick.elem.remove();
+  console.log('before' ,bricks.length)
+  let x = bricks.indexOf(brick)
+  console.log(x)
+
+  bricks.splice(x,1);
+  console.log('after' ,bricks.length)
+
+  ball.attr('ySpeed', -1*parseInt(ball.attr('ySpeed')))
 }
 
 function endGame2(score1: Number, score2: Number){
@@ -90,11 +136,15 @@ function endGame2(score1: Number, score2: Number){
     score.innerHTML = "Congratulations player1"
 }
 
+function getRandomBetween2(x: number, y: number): number {
+  return Math.floor(Math.random() * (Math.abs(x-y)+1)) + x
+}
+
 function updateAndReset2(lives: Number, ball: Elem) {
   console.log('resetted the game!')
   const livesLabel = document.getElementById("lives")!;
   livesLabel.innerHTML = `lives: ${lives}`;
-  ball.attr('cx', 450).attr('cy', 300)
+  ball.attr('cx', getRandomBetween2(400,500)).attr('cy', getRandomBetween2(250,350))
 }
 
 function controlPaddleObservable2(paddle: Elem): void {
@@ -113,43 +163,4 @@ function controlPaddleObservable2(paddle: Elem): void {
 if (typeof window != 'undefined')
   window.onload = ()=>{
     breakout();
-  }
-
-  function drawRectObservable(svg: HTMLElement): Observable<Elem> {
-    const
-    mousemove = Observable.fromEvent<MouseEvent>(svg, 'mousemove'),
-    mouseup = Observable.fromEvent<MouseEvent>(svg, 'mouseup');
-    return Observable.fromEvent<MouseEvent>(svg, 'mousedown')
-    .map(({clientX, clientY}) => ({ clientX: clientX,
-      clientY: clientY,
-      x0: clientX - svg.getBoundingClientRect().left,
-      y0: clientY - svg.getBoundingClientRect().top,
-      rect: new Elem(svg, 'rect')
-      .attr('x', String(clientX - svg.getBoundingClientRect().left))
-      .attr('y', String(clientY - svg.getBoundingClientRect().top))
-      .attr('width', '5')
-      .attr('height', '5')
-      .attr('fill', '#95B3D7'),
-      svgRect: svg.getBoundingClientRect()}))
-    .map(({clientX, clientY, x0, y0, svgRect, rect}) => ({
-        rect: rect,
-        svgRect: svgRect,
-        x0: x0,
-        y0: y0,
-        x1: clientX - svgRect.left,
-        y1: clientY - svgRect.top
-      }))
-    .flatMap(({svgRect, x1, y1, rect}) =>
-    mousemove
-    .takeUntil(mouseup)
-    .map(({clientX, clientY}) => ({ rect: rect,
-              left: Math.min(x1, clientX - svgRect.left),
-              top: Math.min(y1, clientY - svgRect.top),
-              width: Math.abs(clientX - svgRect.left - x1),
-              height: Math.abs(clientY - svgRect.top - y1) })))
-    .map(({rect, left, top, width, height}) =>
-    rect.attr('x', left)
-    .attr('y', top)
-    .attr('width', String(width))
-    .attr('height', String(height)));
   }
