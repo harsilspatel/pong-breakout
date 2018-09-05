@@ -1,6 +1,6 @@
 "use strict";
 function pong() {
-    var score1 = 0, score2 = 0, ySpeed = 5, xSpeed = 5, gameRounds = 5;
+    var score1 = 0, score2 = 0, gameRounds = 5;
     const svg = document.getElementById("canvas");
     let leftPaddle = new Elem(svg, 'rect')
         .attr('x', 30)
@@ -19,7 +19,9 @@ function pong() {
         .attr('cx', 650)
         .attr('cy', 300)
         .attr('r', 7)
-        .attr('fill', '#FFFFFF');
+        .attr('fill', '#FFFFFF')
+        .attr('xSpeed', 1)
+        .attr('ySpeed', 1);
     const ballInterval = Observable.interval(10)
         .map(() => ({
         x: Number(ball.attr('cx')),
@@ -40,24 +42,24 @@ function pong() {
         (x - r <= Number(leftPaddle.attr('x')) + Number(leftPaddle.attr('width')) &&
             (Number(leftPaddle.attr('y')) <= y &&
                 y <= (Number(leftPaddle.attr('y')) + Number(leftPaddle.attr('height'))))) ?
-        (xSpeed = -1 * xSpeed) : (xSpeed))
-        .subscribe(() => (ball.attr('cx', xSpeed + Number(ball.attr('cx')))));
+        ball.attr('xSpeed', -1 * parseInt(ball.attr('xSpeed'))) : (parseInt(ball.attr('xSpeed'))))
+        .subscribe(() => (ball.attr('cx', parseInt(ball.attr('xSpeed')) + Number(ball.attr('cx')))));
     ballOberservable
         .filter(({ y }) => 0 <= y - Number(leftPaddle.attr('height')) / 2 && y + Number(leftPaddle.attr('height')) / 2 <= svg.getBoundingClientRect().bottom - svg.getBoundingClientRect().top)
         .map(({ y }) => leftPaddle.attr('y', y - Number(leftPaddle.attr('height')) / 2))
         .subscribe(_ => ({}));
     ballOberservable.map(({ y, r }) => ({ y, r,
         bottomBound: svg.getBoundingClientRect().bottom - svg.getBoundingClientRect().top }))
-        .map(({ y, r, bottomBound }) => (bottomBound <= y + r) || (y - r <= 0) ? (ySpeed = -1 * ySpeed) : (ySpeed))
-        .subscribe(({}) => (ball.attr('cy', ySpeed + Number(ball.attr('cy')))));
+        .map(({ y, r, bottomBound }) => (bottomBound <= y + r) || (y - r <= 0) ? ball.attr('ySpeed', -1 * parseInt(ball.attr('ySpeed'))) : (parseInt(ball.attr('ySpeed'))))
+        .subscribe(({}) => (ball.attr('cy', parseInt(ball.attr('ySpeed')) + Number(ball.attr('cy')))));
     ballOberservable
-        .map(({ x, y, r }) => (x - r + xSpeed <= 0) ? updateAndReset(score1, ++score2, ball) : true)
+        .map(({ x, y, r }) => (x - r + parseInt(ball.attr('xSpeed')) <= 0) ? updateAndReset(score1, ++score2, ball) : true)
         .map(() => ({
         x: Number(ball.attr('cx')),
         y: Number(ball.attr('cy')),
         r: Number(ball.attr('r'))
     }))
-        .map(({ x, y, r }) => (x + r - xSpeed) >= svg.getBoundingClientRect().right - svg.getBoundingClientRect().left ? updateAndReset(++score1, score2, ball) : true)
+        .map(({ x, y, r }) => (x + r - parseInt(ball.attr('xSpeed'))) >= svg.getBoundingClientRect().right - svg.getBoundingClientRect().left ? updateAndReset(++score1, score2, ball) : true)
         .map(_ => score1 == gameRounds || score2 == gameRounds ? endGame(score1, score2) : true)
         .subscribe(_ => { });
 }
