@@ -1,6 +1,6 @@
 "use strict";
 function pong() {
-    var score1 = 0, score2 = 0, gameRounds = 1;
+    var speed = 1, fps = 2, score1 = 0, score2 = 0, gameRounds = 1;
     const svg = document.getElementById("canvas");
     let leftPaddle = new Elem(svg, 'rect')
         .attr('x', 10)
@@ -20,46 +20,43 @@ function pong() {
         .attr('cy', getRandomBetween(250, 350))
         .attr('r', 7)
         .attr('fill', '#FFFFFF')
-        .attr('xSpeed', 3)
-        .attr('ySpeed', 3);
-    const ballInterval = Observable.interval(10)
+        .attr('xSpeed', speed)
+        .attr('ySpeed', speed);
+    const ballInterval = Observable.interval(fps)
         .map(() => ({
-        x: Number(ball.attr('cx')),
-        y: Number(ball.attr('cy')),
-        r: Number(ball.attr('r'))
+        x: parseInt(ball.attr('cx')),
+        y: parseInt(ball.attr('cy')),
+        r: parseInt(ball.attr('r'))
     }));
     const ballOberservable = ballInterval
         .takeUntil(ballInterval.filter(({ x, y, r }) => score1 == gameRounds || score2 == gameRounds))
         .map(() => ({
-        x: Number(ball.attr('cx')),
-        y: Number(ball.attr('cy')),
-        r: Number(ball.attr('r'))
+        x: parseInt(ball.attr('cx')),
+        y: parseInt(ball.attr('cy')),
+        r: parseInt(ball.attr('r'))
     }));
     ballOberservable
-        .map(({ x, y, r }) => (x + r >= Number(rightPaddle.attr('x')) &&
-        (Number(rightPaddle.attr('y')) <= y &&
-            y <= (Number(rightPaddle.attr('y')) + Number(rightPaddle.attr('height'))))) ||
-        (x - r <= Number(leftPaddle.attr('x')) + Number(leftPaddle.attr('width')) &&
-            (Number(leftPaddle.attr('y')) <= y &&
-                y <= (Number(leftPaddle.attr('y')) + Number(leftPaddle.attr('height'))))) ?
-        ball.attr('xSpeed', -1 * parseInt(ball.attr('xSpeed'))) : (parseInt(ball.attr('xSpeed'))))
-        .subscribe(() => (ball.attr('cx', parseInt(ball.attr('xSpeed')) + Number(ball.attr('cx')))));
+        .map(({ x, y, r }) => (isBetween(x + r, parseInt(rightPaddle.attr('x')), 0, parseInt(ball.attr('xSpeed'))) &&
+        (isBetween(y, parseInt(rightPaddle.attr('y')), parseInt(rightPaddle.attr('height')), parseInt(ball.attr('ySpeed'))))) ||
+        (isBetween(x - r, parseInt(leftPaddle.attr('x')) + parseInt(leftPaddle.attr('width')), 0, parseInt(ball.attr('xSpeed'))) &&
+            (isBetween(y, parseInt(leftPaddle.attr('y')), parseInt(leftPaddle.attr('height')), parseInt(ball.attr('ySpeed'))))) ?
+        ball.attr('xSpeed', reverseDirection(ball, 'xSpeed')) : (parseInt(ball.attr('xSpeed'))))
+        .subscribe(() => (ball.attr('cx', parseInt(ball.attr('xSpeed')) + parseInt(ball.attr('cx')))));
     ballOberservable
-        .filter(({ y }) => 0 <= y - Number(leftPaddle.attr('height')) / 2 && y + Number(leftPaddle.attr('height')) / 2 <= svg.getBoundingClientRect().bottom - svg.getBoundingClientRect().top)
-        .map(({ y }) => leftPaddle.attr('y', y - Number(leftPaddle.attr('height')) / 2))
-        .subscribe(_ => ({}));
+        .filter(({ y }) => 0 <= y - parseInt(leftPaddle.attr('height')) / 2 && y + parseInt(leftPaddle.attr('height')) / 2 <= Math.floor(svg.getBoundingClientRect().bottom) - Math.floor(svg.getBoundingClientRect().top))
+        .map(({ y }) => leftPaddle.attr('y', y - parseInt(leftPaddle.attr('height')) / 2));
     ballOberservable.map(({ y, r }) => ({ y, r,
-        bottomBound: svg.getBoundingClientRect().bottom - svg.getBoundingClientRect().top }))
-        .map(({ y, r, bottomBound }) => (bottomBound <= y + r) || (y - r <= 0) ? ball.attr('ySpeed', -1 * parseInt(ball.attr('ySpeed'))) : (parseInt(ball.attr('ySpeed'))))
-        .subscribe(({}) => (ball.attr('cy', parseInt(ball.attr('ySpeed')) + Number(ball.attr('cy')))));
+        bottomBound: Math.floor(svg.getBoundingClientRect().bottom) - Math.floor(svg.getBoundingClientRect().top) }))
+        .map(({ y, r, bottomBound }) => isBetween(y - r, 0, 0, parseInt(ball.attr('ySpeed'))) || isBetween(y + r, bottomBound, 0, parseInt(ball.attr('ySpeed'))) ? ball.attr('ySpeed', reverseDirection(ball, 'ySpeed')) : (parseInt(ball.attr('ySpeed'))))
+        .subscribe(({}) => (ball.attr('cy', parseInt(ball.attr('ySpeed')) + parseInt(ball.attr('cy')))));
     ballOberservable
-        .map(({ x, y, r }) => (x - r + parseInt(ball.attr('xSpeed')) <= 0) ? updateAndReset(score1, ++score2, ball) : true)
+        .map(({ x, y, r }) => isBetween(x - r, 0, 0, parseInt(ball.attr('xSpeed'))) ? updateAndReset(score1, ++score2, ball) : true)
         .map(() => ({
-        x: Number(ball.attr('cx')),
-        y: Number(ball.attr('cy')),
-        r: Number(ball.attr('r'))
+        x: parseInt(ball.attr('cx')),
+        y: parseInt(ball.attr('cy')),
+        r: parseInt(ball.attr('r'))
     }))
-        .map(({ x, y, r }) => (x + r - parseInt(ball.attr('xSpeed'))) >= svg.getBoundingClientRect().right - svg.getBoundingClientRect().left ? updateAndReset(++score1, score2, ball) : true)
+        .map(({ x, y, r }) => isBetween(x + r, Math.floor(svg.getBoundingClientRect().right) - Math.floor(svg.getBoundingClientRect().left), 0, parseInt(ball.attr('xSpeed'))) ? updateAndReset(++score1, score2, ball) : true)
         .map(_ => score1 == gameRounds || score2 == gameRounds ? endGame(score1, score2) : true)
         .subscribe(_ => { });
 }
@@ -76,7 +73,7 @@ function updateAndReset(score1, score2, ball) {
     ball.attr('cx', getRandomBetween(400, 500)).attr('cy', getRandomBetween(250, 350));
 }
 function controlPaddleObservable(paddle) {
-    const svg = document.getElementById("canvas"), svgTop = svg.getBoundingClientRect().top, o = Observable
+    const svg = document.getElementById("canvas"), svgTop = Math.floor(svg.getBoundingClientRect().top), o = Observable
         .fromEvent(svg, "mousemove")
         .map(({ clientX, clientY }) => ({ x: clientX, y: clientY - svgTop - parseInt(paddle.attr('height')) / 2 }))
         .filter(({ x, y }) => 0 <= y)
@@ -86,17 +83,5 @@ function controlPaddleObservable(paddle) {
 if (typeof window != 'undefined')
     window.onload = () => {
         pong();
-        mousePosObservable2();
     };
-function mousePosObservable2() {
-    const pos = document.getElementById("pos"), o = Observable
-        .fromEvent(document, "mousemove")
-        .map(({ clientX, clientY }) => ({ x: clientX, y: clientY }));
-    o.map(({ x, y }) => `${x},${y}`)
-        .subscribe(s => pos.innerHTML = s);
-    o.filter(({ x }) => x > 400)
-        .subscribe(_ => pos.classList.add('highlight'));
-    o.filter(({ x }) => x <= 400)
-        .subscribe(_ => pos.classList.remove('highlight'));
-}
 //# sourceMappingURL=pong.js.map
