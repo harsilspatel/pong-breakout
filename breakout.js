@@ -9,19 +9,19 @@ function breakout() {
         .attr('y', 20)
         .attr('width', 90)
         .attr('height', 30)
-        .attr('fill', ('#' + getRandomBetween2(0 + 30, 255 - 30).toString(16) + getRandomBetween2(0 + 30, 255 - 30).toString(16) + getRandomBetween2(0 + 30, 255 - 30).toString(16))))))
+        .attr('fill', ('#' + getRandomBetween(0 + 30, 255 - 30).toString(16) + getRandomBetween(0 + 30, 255 - 30).toString(16) + getRandomBetween(0 + 30, 255 - 30).toString(16))))))
         .forEach(i => (bricks.push(new Elem(svg, 'rect')
         .attr('x', ((i - 1) * 90))
         .attr('y', 50)
         .attr('width', 90)
         .attr('height', 30)
-        .attr('fill', ('#' + getRandomBetween2(0 + 30, 255 - 30).toString(16) + getRandomBetween2(0 + 30, 255 - 30).toString(16) + getRandomBetween2(0 + 30, 255 - 30).toString(16))))))
+        .attr('fill', ('#' + getRandomBetween(0 + 30, 255 - 30).toString(16) + getRandomBetween(0 + 30, 255 - 30).toString(16) + getRandomBetween(0 + 30, 255 - 30).toString(16))))))
         .forEach(i => (bricks.push(new Elem(svg, 'rect')
         .attr('x', ((i - 1) * 90))
         .attr('y', 80)
         .attr('width', 90)
         .attr('height', 30)
-        .attr('fill', ('#' + getRandomBetween2(0 + 30, 255 - 30).toString(16) + getRandomBetween2(0 + 30, 255 - 30).toString(16) + getRandomBetween2(0 + 30, 255 - 30).toString(16))))))
+        .attr('fill', ('#' + getRandomBetween(0 + 30, 255 - 30).toString(16) + getRandomBetween(0 + 30, 255 - 30).toString(16) + getRandomBetween(0 + 30, 255 - 30).toString(16))))))
         .subscribe(_ => { });
     const svg = document.getElementById("breakout");
     let paddle = new Elem(svg, 'rect')
@@ -32,8 +32,8 @@ function breakout() {
         .attr('fill', '#FFFFFF');
     controlPaddleObservable2(paddle);
     let ball = new Elem(svg, 'circle')
-        .attr('cx', getRandomBetween2(400, 500))
-        .attr('cy', getRandomBetween2(250, 350))
+        .attr('cx', getRandomBetween(400, 500))
+        .attr('cy', getRandomBetween(250, 350))
         .attr('r', 7)
         .attr('fill', '#FFFFFF')
         .attr('xSpeed', 1)
@@ -83,14 +83,11 @@ function endGame2(score1, score2) {
         score.innerHTML = "Congratulations player2" :
         score.innerHTML = "Congratulations player1";
 }
-function getRandomBetween2(x, y) {
-    return Math.floor(Math.random() * (Math.abs(x - y) + 1)) + x;
-}
 function updateAndReset2(lives, ball) {
     console.log('resetted the game!');
     const livesLabel = document.getElementById("lives");
     livesLabel.innerHTML = `lives: ${lives}`;
-    ball.attr('cx', getRandomBetween2(400, 500)).attr('cy', getRandomBetween2(250, 350));
+    ball.attr('cx', getRandomBetween(400, 500)).attr('cy', getRandomBetween(250, 350));
 }
 function controlPaddleObservable2(paddle) {
     const svg = document.getElementById("breakout"), svgLeft = svg.getBoundingClientRect().left, o = Observable

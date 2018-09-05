@@ -1,6 +1,6 @@
 "use strict";
 function pong() {
-    var score1 = 0, score2 = 0, gameRounds = 5;
+    var score1 = 0, score2 = 0, gameRounds = 1;
     const svg = document.getElementById("canvas");
     let leftPaddle = new Elem(svg, 'rect')
         .attr('x', 10)
@@ -72,11 +72,8 @@ function endGame(score1, score2) {
 function updateAndReset(score1, score2, ball) {
     console.log('resetted the game!');
     const score = document.getElementById("score");
-    score.innerHTML = `${score1},${score2}`;
+    score.innerHTML = `${score1} ${score2}`;
     ball.attr('cx', getRandomBetween(400, 500)).attr('cy', getRandomBetween(250, 350));
-}
-function getRandomBetween(x, y) {
-    return Math.floor(Math.random() * (Math.abs(x - y) + 1)) + x;
 }
 function controlPaddleObservable(paddle) {
     const svg = document.getElementById("canvas"), svgTop = svg.getBoundingClientRect().top, o = Observable

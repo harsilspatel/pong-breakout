@@ -15,7 +15,7 @@ function pong() {
 
   var score1 = 0,
     score2 = 0,
-    gameRounds = 5;
+    gameRounds = 1;
 
   const svg = document.getElementById("canvas")!;
   let leftPaddle = new Elem(svg, 'rect')
@@ -106,12 +106,8 @@ function endGame(score1: Number, score2: Number){
 function updateAndReset(score1: Number, score2: Number, ball: Elem) {
   console.log('resetted the game!')
   const score = document.getElementById("score")!;
-  score.innerHTML = `${score1},${score2}`;
+  score.innerHTML = `${score1} ${score2}`;
   ball.attr('cx', getRandomBetween(400,500)).attr('cy', getRandomBetween(250,350))
-}
-
-function getRandomBetween(x: number, y: number): number {
-  return Math.floor(Math.random() * (Math.abs(x-y)+1)) + x
 }
 
 function controlPaddleObservable(paddle: Elem): void {

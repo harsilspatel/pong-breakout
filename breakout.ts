@@ -30,7 +30,7 @@ function breakout() {
       .attr('y', 20)
       .attr('width', 90)
       .attr('height', 30)
-      .attr('fill', ('#' + getRandomBetween2(0+30,255-30).toString(16) + getRandomBetween2(0+30,255-30).toString(16) + getRandomBetween2(0+30,255-30).toString(16))) //16777215 being FFFFFF
+      .attr('fill', ('#' + getRandomBetween(0+30,255-30).toString(16) + getRandomBetween(0+30,255-30).toString(16) + getRandomBetween(0+30,255-30).toString(16))) //16777215 being FFFFFF
     )))
     .forEach(i => (
       bricks.push(
@@ -39,7 +39,7 @@ function breakout() {
       .attr('y', 50)
       .attr('width', 90)
       .attr('height', 30)
-      .attr('fill', ('#' + getRandomBetween2(0+30,255-30).toString(16) + getRandomBetween2(0+30,255-30).toString(16) + getRandomBetween2(0+30,255-30).toString(16))) //16777215 being FFFFFF
+      .attr('fill', ('#' + getRandomBetween(0+30,255-30).toString(16) + getRandomBetween(0+30,255-30).toString(16) + getRandomBetween(0+30,255-30).toString(16))) //16777215 being FFFFFF
     )))
     .forEach(i => (
       bricks.push(
@@ -48,7 +48,7 @@ function breakout() {
       .attr('y', 80)
       .attr('width', 90)
       .attr('height', 30)
-      .attr('fill', ('#' + getRandomBetween2(0+30,255-30).toString(16) + getRandomBetween2(0+30,255-30).toString(16) + getRandomBetween2(0+30,255-30).toString(16))) //16777215 being FFFFFF
+      .attr('fill', ('#' + getRandomBetween(0+30,255-30).toString(16) + getRandomBetween(0+30,255-30).toString(16) + getRandomBetween(0+30,255-30).toString(16))) //16777215 being FFFFFF
     )))
     .subscribe(_ => {})
     
@@ -66,8 +66,8 @@ function breakout() {
   controlPaddleObservable2(paddle);
 
   let ball = new Elem(svg, 'circle')
-  .attr('cx', getRandomBetween2(400,500))
-  .attr('cy', getRandomBetween2(250,350))
+  .attr('cx', getRandomBetween(400,500))
+  .attr('cy', getRandomBetween(250,350))
   .attr('r', 7)
   .attr('fill', '#FFFFFF')
   .attr('xSpeed', 1)
@@ -117,7 +117,7 @@ function breakout() {
 
 }
 
-function removeAndReverse(bricks:[Elem], brick: Elem, ball: Elem) {
+function removeAndReverse(bricks:Elem[], brick: Elem, ball: Elem) {
   brick.elem.remove();
   console.log('before' ,bricks.length)
   let x = bricks.indexOf(brick)
@@ -136,15 +136,11 @@ function endGame2(score1: Number, score2: Number){
     score.innerHTML = "Congratulations player1"
 }
 
-function getRandomBetween2(x: number, y: number): number {
-  return Math.floor(Math.random() * (Math.abs(x-y)+1)) + x
-}
-
 function updateAndReset2(lives: Number, ball: Elem) {
   console.log('resetted the game!')
   const livesLabel = document.getElementById("lives")!;
   livesLabel.innerHTML = `lives: ${lives}`;
-  ball.attr('cx', getRandomBetween2(400,500)).attr('cy', getRandomBetween2(250,350))
+  ball.attr('cx', getRandomBetween(400,500)).attr('cy', getRandomBetween(250,350))
 }
 
 function controlPaddleObservable2(paddle: Elem): void {
