@@ -2,19 +2,8 @@
 // https://docs.google.com/document/d/1woMAgJVf1oL3M49Q8N3E1ykTuTu5_r28_MQPVS5QIVo/edit?usp=sharing
 
 function breakout() {
-  // Inside this function you will use the classes and functions 
-  // defined in svgelement.ts and observable.ts
-  // to add visuals to the svg element in pong.html, animate them, and make them interactive.
-  // Study and complete the tasks in basicexamples.ts first to get ideas.
 
-  // You will be marked on your functional programming style
-  // as well as the functionality that you implement.
-  // Document your code!  
-  // Explain which ideas you have used ideas from the lectures to 
-  // create reusable, generic functions.
-
-  var ySpeed = 2,
-    xSpeed = 2,
+  var speed = 1,
     lives = 1,
     fps = 5,
     bricks: Elem[] = [];
@@ -70,48 +59,53 @@ function breakout() {
   .attr('cy', getRandomBetween(250,350))
   .attr('r', 7)
   .attr('fill', '#FFFFFF')
-  .attr('xSpeed', 1)
-  .attr('ySpeed', 1);
+  .attr('xSpeed', speed)
+  .attr('ySpeed', speed);
 
   const ballInterval = Observable.interval(fps)
   .map(() => ({
-    x: Number(ball.attr('cx')),
-    y: Number(ball.attr('cy')),
-    r: Number(ball.attr('r'))
+    x: parseInt(ball.attr('cx')),
+    y: parseInt(ball.attr('cy')),
+    r: parseInt(ball.attr('r'))
   }));
 
   const ballOberservable = ballInterval
     .takeUntil(ballInterval.filter(_ => lives == 0))
     .map(() => ({
-      x: Number(ball.attr('cx')),
-      y: Number(ball.attr('cy')),
-      r: Number(ball.attr('r'))
+      x: parseInt(ball.attr('cx')),
+      y: parseInt(ball.attr('cy')),
+      r: parseInt(ball.attr('r'))
     }));
 
   ballOberservable
-  .subscribe(({x,y,r}) => (Number(paddle.attr('x')) <= x && x <= Number(paddle.attr('x')) + Number(paddle.attr('width')) &&
-                     Number(paddle.attr('y')) - parseInt(ball.attr('ySpeed')) +2 <= y + r && y + r < Number(paddle.attr('y')) +2 ? ball.attr('ySpeed', -1*parseInt(ball.attr('ySpeed'))): (parseInt(ball.attr('ySpeed')))))
+  .subscribe(({x,y,r}) => (parseInt(paddle.attr('x')) <= x && x <= parseInt(paddle.attr('x')) + parseInt(paddle.attr('width')) &&
+                     parseInt(paddle.attr('y')) - parseInt(ball.attr('ySpeed')) +2 <= y + r && y + r < parseInt(paddle.attr('y')) +2 ? ball.attr('ySpeed', -1*parseInt(ball.attr('ySpeed'))): (parseInt(ball.attr('ySpeed')))))
 
   // making ball collide with the left and right bounds
   ballOberservable
-  .map(({x,r}) => ({x,r, rightBound: svg.getBoundingClientRect().right - svg.getBoundingClientRect().left}))
+  .map(({x,r}) => ({x,r, rightBound: Math.floor(svg.getBoundingClientRect().right) - Math.floor(svg.getBoundingClientRect().left)}))
     // .filter(({y,r,bottomBound}) => (0 < (y - r)) && ((y + r) < bottomBound))
-    .map(({x,r,rightBound}) => (rightBound <= x + r) || (x - r <= 0) ? ball.attr('xSpeed', -1*parseInt(ball.attr('xSpeed'))): (parseInt(ball.attr('xSpeed'))))
-    .subscribe(({}) => (ball.attr('cx', parseInt(ball.attr('xSpeed'))+Number(ball.attr('cx')))))
+    // .map(({x,r,rightBound}) => (rightBound <= x + r) || (x - r <= 0) ? ball.attr('xSpeed', -1*parseInt(ball.attr('xSpeed'))): (parseInt(ball.attr('xSpeed'))))
+    .map(({x,r,rightBound}) => isBetween(x+r, rightBound, 0, parseInt(ball.attr('xSpeed'))) || isBetween(x-r, 0, 0, parseInt(ball.attr('xSpeed'))) ? ball.attr('xSpeed', -1*parseInt(ball.attr('xSpeed'))): (parseInt(ball.attr('xSpeed'))))
+    // .map(({x,r,rightBound}) => isBetween(x-r, 0, 0, parseInt(ball.attr('xSpeed')) + 3) || isBetween(x+r, rightBound, rightBound, parseInt(ball.attr('xSpeed'))) ? ball.attr('xSpeed', -1*parseInt(ball.attr('xSpeed'))): (parseInt(ball.attr('xSpeed'))))
+    .subscribe(({}) => (ball.attr('cx', parseInt(ball.attr('xSpeed'))+parseInt(ball.attr('cx')))))
 
     // making the ball collide the top
   ballOberservable
-    .map(({y,r}) => (y - r <= 0) ? (ball.attr('ySpeed', -1*parseInt(ball.attr('ySpeed')))): (parseInt(ball.attr('ySpeed'))))
-    .subscribe(({}) => (ball.attr('cy', parseInt(ball.attr('ySpeed'))+Number(ball.attr('cy')))))
+    // .map(({y,r}) => (y - r <= 0) ? (ball.attr('ySpeed', -1*parseInt(ball.attr('ySpeed')))): (parseInt(ball.attr('ySpeed'))))
+    .map(({y,r}) => isBetween(y-r, 0, 0, parseInt(ball.attr('ySpeed'))) ? (ball.attr('ySpeed', -1*parseInt(ball.attr('ySpeed')))): (parseInt(ball.attr('ySpeed'))))
+    .subscribe(({}) => (ball.attr('cy', parseInt(ball.attr('ySpeed'))+parseInt(ball.attr('cy')))))
   
     // resetting the game if ball strikes bottom
   ballOberservable
-  .map(({x,y,r}) => (y + r - parseInt(ball.attr('ySpeed'))) >= svg.getBoundingClientRect().bottom - svg.getBoundingClientRect().top ? updateAndReset2(--lives, ball) : true)
+  // .map(({x,y,r}) => (y + r - parseInt(ball.attr('ySpeed'))) >= Math.floor(svg.getBoundingClientRect().bottom) - Math.floor(svg.getBoundingClientRect().top) ? updateAndReset2(--lives, ball) : true)
+  .map(({x,y,r}) => isBetween(y+r, Math.floor(svg.getBoundingClientRect().height), 0, parseInt(ball.attr('ySpeed'))) ? updateAndReset2(--lives, ball) : true)
   .subscribe(_ => {})
 
   ballOberservable
   .map(({x,y,r}) => bricks.forEach( brick => (
-    parseInt(brick.attr('y')) + parseInt(brick.attr('height')) == y - r + parseInt(ball.attr('ySpeed')) && parseInt(brick.attr('x')) <= x && x <= parseInt(brick.attr('x')) + parseInt(brick.attr('width')) ? removeAndReverse(bricks, brick, ball) : true
+    // parseInt(brick.attr('y')) + parseInt(brick.attr('height')) == y - r + parseInt(ball.attr('ySpeed')) && parseInt(brick.attr('x')) <= x && x <= parseInt(brick.attr('x')) + parseInt(brick.attr('width')) ? removeAndReverse(bricks, brick, ball) : true
+    isBetween(y-r, parseInt(brick.attr('y')) + parseInt(brick.attr('height')), 0, parseInt(ball.attr('ySpeed'))) && isBetween(x, parseInt(brick.attr('x')), parseInt(brick.attr('width')), parseInt(ball.attr('xSpeed'))) ? removeAndReverse(bricks, brick, ball) : true
   )))
   .subscribe(_ => {})
 
@@ -129,14 +123,14 @@ function removeAndReverse(bricks:Elem[], brick: Elem, ball: Elem) {
   ball.attr('ySpeed', -1*parseInt(ball.attr('ySpeed')))
 }
 
-function endGame2(score1: Number, score2: Number){
+function endGame2(score1: number, score2: number){
   const score = document.getElementById("score")!
   score2 == 5 ?
     score.innerHTML = "Congratulations player2" :
     score.innerHTML = "Congratulations player1"
 }
 
-function updateAndReset2(lives: Number, ball: Elem) {
+function updateAndReset2(lives: number, ball: Elem) {
   console.log('resetted the game!')
   const livesLabel = document.getElementById("lives")!;
   livesLabel.innerHTML = `lives: ${lives}`;
@@ -146,7 +140,7 @@ function updateAndReset2(lives: Number, ball: Elem) {
 function controlPaddleObservable2(paddle: Elem): void {
   const
     svg = document.getElementById("breakout")!,
-    svgLeft = svg.getBoundingClientRect().left,
+    svgLeft = Math.floor(svg.getBoundingClientRect().left),
     o = Observable
           .fromEvent<MouseEvent>(svg, "mousemove")
           .map(({clientX, clientY})=>({x: clientX - svgLeft - parseInt(paddle.attr('width'))/2, y: clientY}))
