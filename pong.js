@@ -3,25 +3,25 @@ function pong() {
     var score1 = 0, score2 = 0, gameRounds = 5;
     const svg = document.getElementById("canvas");
     let leftPaddle = new Elem(svg, 'rect')
-        .attr('x', 30)
+        .attr('x', 10)
         .attr('y', 80)
-        .attr('width', 10)
+        .attr('width', 3)
         .attr('height', 120)
         .attr('fill', '#FFFFFF');
     let rightPaddle = new Elem(svg, 'rect')
-        .attr('x', 900 - 30 - 10)
+        .attr('x', 900 - 10 - 3)
         .attr('y', 70)
-        .attr('width', 10)
+        .attr('width', 3)
         .attr('height', 120)
         .attr('fill', '#FFFFFF');
     controlPaddleObservable(rightPaddle);
     let ball = new Elem(svg, 'circle')
-        .attr('cx', 650)
-        .attr('cy', 300)
+        .attr('cx', getRandomBetween(400, 500))
+        .attr('cy', getRandomBetween(250, 350))
         .attr('r', 7)
         .attr('fill', '#FFFFFF')
-        .attr('xSpeed', 1)
-        .attr('ySpeed', 1);
+        .attr('xSpeed', 3)
+        .attr('ySpeed', 3);
     const ballInterval = Observable.interval(10)
         .map(() => ({
         x: Number(ball.attr('cx')),
@@ -73,7 +73,10 @@ function updateAndReset(score1, score2, ball) {
     console.log('resetted the game!');
     const score = document.getElementById("score");
     score.innerHTML = `${score1},${score2}`;
-    ball.attr('cx', 450).attr('cy', 300);
+    ball.attr('cx', getRandomBetween(400, 500)).attr('cy', getRandomBetween(250, 350));
+}
+function getRandomBetween(x, y) {
+    return Math.floor(Math.random() * (Math.abs(x - y) + 1)) + x;
 }
 function controlPaddleObservable(paddle) {
     const svg = document.getElementById("canvas"), svgTop = svg.getBoundingClientRect().top, o = Observable
