@@ -1,6 +1,6 @@
 "use strict";
 function breakout() {
-    var speed = 1, lives = 1, fps = 5, bricks = [];
+    var speed = 1, lives = 1, fps = 10, bricks = [];
     const bricksObservable = Observable.interval(1);
     bricksObservable
         .takeUntil(bricksObservable.filter(i => i == 11))
@@ -52,8 +52,7 @@ function breakout() {
         r: parseInt(ball.attr('r'))
     }));
     ballOberservable
-        .subscribe(({ x, y, r }) => (parseInt(paddle.attr('x')) <= x && x <= parseInt(paddle.attr('x')) + parseInt(paddle.attr('width')) &&
-        parseInt(paddle.attr('y')) - parseInt(ball.attr('ySpeed')) + 2 <= y + r && y + r < parseInt(paddle.attr('y')) + 2 ? ball.attr('ySpeed', -1 * parseInt(ball.attr('ySpeed'))) : (parseInt(ball.attr('ySpeed')))));
+        .subscribe(({ x, y, r }) => (isBetween(x, parseInt(paddle.attr('x')), parseInt(paddle.attr('width')), parseInt(ball.attr('xSpeed'))) && isBetween(y + r, parseInt(paddle.attr('y')), 0, parseInt(ball.attr('ySpeed'))) ? ball.attr('ySpeed', -1 * parseInt(ball.attr('ySpeed'))) : (parseInt(ball.attr('ySpeed')))));
     ballOberservable
         .map(({ x, r }) => ({ x, r, rightBound: Math.floor(svg.getBoundingClientRect().right) - Math.floor(svg.getBoundingClientRect().left) }))
         .map(({ x, r, rightBound }) => isBetween(x + r, rightBound, 0, parseInt(ball.attr('xSpeed'))) || isBetween(x - r, 0, 0, parseInt(ball.attr('xSpeed'))) ? ball.attr('xSpeed', -1 * parseInt(ball.attr('xSpeed'))) : (parseInt(ball.attr('xSpeed'))))

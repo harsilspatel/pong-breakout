@@ -5,7 +5,7 @@ function breakout() {
 
   var speed = 1,
     lives = 1,
-    fps = 5,
+    fps = 10,
     bricks: Elem[] = [];
 
   const bricksObservable = Observable.interval(1);
@@ -78,8 +78,8 @@ function breakout() {
     }));
 
   ballOberservable
-  .subscribe(({x,y,r}) => (parseInt(paddle.attr('x')) <= x && x <= parseInt(paddle.attr('x')) + parseInt(paddle.attr('width')) &&
-                     parseInt(paddle.attr('y')) - parseInt(ball.attr('ySpeed')) +2 <= y + r && y + r < parseInt(paddle.attr('y')) +2 ? ball.attr('ySpeed', -1*parseInt(ball.attr('ySpeed'))): (parseInt(ball.attr('ySpeed')))))
+  // .subscribe(({x,y,r}) => (parseInt(paddle.attr('x')) <= x && x <= parseInt(paddle.attr('x')) + parseInt(paddle.attr('width')) && parseInt(paddle.attr('y')) - parseInt(ball.attr('ySpeed')) +2 <= y + r && y + r < parseInt(paddle.attr('y')) +2 ? ball.attr('ySpeed', -1*parseInt(ball.attr('ySpeed'))): (parseInt(ball.attr('ySpeed')))))
+  .subscribe(({x,y,r}) => (isBetween(x, parseInt(paddle.attr('x')), parseInt(paddle.attr('width')), parseInt(ball.attr('xSpeed'))) && isBetween(y+r, parseInt(paddle.attr('y')), 0, parseInt(ball.attr('ySpeed')))? ball.attr('ySpeed', -1*parseInt(ball.attr('ySpeed'))): (parseInt(ball.attr('ySpeed')))))
 
   // making ball collide with the left and right bounds
   ballOberservable
