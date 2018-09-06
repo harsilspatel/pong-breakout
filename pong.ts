@@ -19,8 +19,17 @@ function pong() {
     speed = 1,
     fps = 4;
   const
-    gameRounds = 3,
-    svg = document.getElementById("canvas")!;
+    gameRounds = 1,
+  svg = document.getElementById("canvas")!;
+
+  let divider = new Elem(svg, 'line')
+    .attr('x1', svg.getBoundingClientRect().width/2)
+    .attr('y1', 0)
+    .attr('x2', svg.getBoundingClientRect().width/2)
+    .attr('y2', svg.getBoundingClientRect().height)
+    .attr('stroke', '#444444')
+    .attr('stroke-width', 4)
+    .attr('stroke-dasharray', 20)
 
   let leftPaddle = new Elem(svg, 'rect')
     .attr('x', 10)
@@ -29,14 +38,19 @@ function pong() {
     .attr('height', 120)
     .attr('fill', '#FFFFFF');
 
+    const paddleArea = new Elem(svg, 'rect')
+    .attr('width', 100)
+    .attr('height', svg.getBoundingClientRect().height)
+    .attr('x', svg.getBoundingClientRect().width - 100)
+    .attr('y', 0)
+    .attr('fill', '#444444')
+
   let rightPaddle = new Elem(svg, 'rect')
     .attr('x', 900-10-3) //canvas - distanceFromCanvas - width
     .attr('y', 70)
     .attr('width', 3)
     .attr('height', 120)
     .attr('fill', '#FFFFFF');
-
-  controlPaddleObservable(rightPaddle);
 
   let ball = new Elem(svg, 'circle')
   .attr('cx', getRandomBetween(400,500))
@@ -45,6 +59,16 @@ function pong() {
   .attr('fill', '#FFFFFF')
   .attr('xSpeed', speed)
   .attr('ySpeed', speed);
+
+
+  Observable
+    .fromEvent<MouseEvent>(svg, "mousemove")
+    .map(({clientX, clientY})=>({x: Math.floor(clientX -svg.getBoundingClientRect().left - parseInt(rightPaddle.attr('width'))/2), y: Math.floor(clientY -svg.getBoundingClientRect().top - parseInt(rightPaddle.attr('height'))/2)}))
+    .filter(({x,y}) => 0 <= y && (y + parseInt(rightPaddle.attr('height')) <= (svg.getBoundingClientRect().height))) //for upperBound
+    .filter(({x, y}) => isBetween(x, svg.getBoundingClientRect().width - 100, 100, 0))
+    .subscribe(({x,y}) => rightPaddle.attr('x', x).attr('y', y));
+
+
 
   const mainInterval = Observable.interval(fps);
   // .map(() => ({
@@ -73,12 +97,13 @@ function pong() {
   mainObservable
   .map(({x, y, r, xSpeed, ySpeed}) => ({x,y,r, xSpeed, ySpeed, paddleHeight: parseInt(rightPaddle.attr('height')), paddleWidth: parseInt(rightPaddle.attr('width'))})) //both paddles have same height and widths
   .filter(({x,y,r, xSpeed, ySpeed, paddleHeight, paddleWidth}) => //if x coordinates for ball and right paddle are same and cy is between the edges of paddle then reverse the direction
-    (isCollision(x+r, parseInt(rightPaddle.attr('x')), xSpeed) && 
+    (isCollision(x+r, parseInt(rightPaddle.attr('x')), 2*xSpeed) && //Please note that error here is 2*xSpeed, so that when paddle is being moving towards the ball it can hit it. However, as it is twice the normal error, it may look like the ball is not touching the paddle when striking.  
     (isBetween(y, parseInt(rightPaddle.attr('y')), paddleHeight, ySpeed))) ||
     (isCollision(x-r, parseInt(leftPaddle.attr('x')) + paddleWidth, xSpeed) &&
     (isBetween(y, parseInt(leftPaddle.attr('y')), paddleHeight, ySpeed)))) // no need to check this since the left paddle is just following it
   .subscribe(({xSpeed}) => ball.attr('xSpeed', -1*xSpeed))
 
+  // making the ball move
   mainObservable.subscribe(({x, y, xSpeed, ySpeed}) => ball.attr('cx', x+xSpeed).attr('cy',y+ySpeed))
 
   // making the ball collide the top and bottom boundaries
@@ -102,20 +127,6 @@ mainObservable
 .subscribe(_ => ball.attr('cx', getRandomBetween(400,500)).attr('cy', getRandomBetween(250,350)))
 
 }
-    
-
-//     // resetting the game 
-//   mainObservable
-//   .map(({x,xSpeed,r}) => isCollision(x-r, 0, xSpeed) ? updateAndReset(score1, ++score2, ball) : true)
-//   .map(() => ({
-//     x: parseInt(ball.attr('cx')),
-//     y: parseInt(ball.attr('cy')),
-//     r: parseInt(ball.attr('r'))
-//   }))
-//   .map(({x,y,r}) => isCollision(x+r, Math.floor(svg.getBoundingClientRect().right) - Math.floor(svg.getBoundingClientRect().left), parseInt(ball.attr('xSpeed'))) ? updateAndReset(++score1, score2, ball) : true)
-//   .map(_ => score1 == gameRounds || score2 == gameRounds? endGame(score1, score2) : true)
-//   .subscribe(_ => {})
-// }
 
 function scored(score1: number, score2: number, gameRounds: number) {
   console.log('resetted the game!')
@@ -128,19 +139,6 @@ function scored(score1: number, score2: number, gameRounds: number) {
   } else if (score1 == gameRounds) {
     result.innerHTML = "Congratulations player 1 😎"
   }
-}
-
-function controlPaddleObservable(paddle: Elem): void {
-  const
-    svg = document.getElementById("canvas")!,
-    svgTop = Math.floor(svg.getBoundingClientRect().top),
-    o = Observable
-          .fromEvent<MouseEvent>(svg, "mousemove")
-          .map(({clientX, clientY})=>({x: clientX, y: clientY - svgTop - parseInt(paddle.attr('height'))/2}))
-          .filter(({x,y}) => 0 <= y) //for upperBound
-          .filter(({x,y}) => (y + parseInt(paddle.attr('height')) <= parseInt(svg.getAttribute('height')!))) //for lowerBound
-          // .filter(({x,y}) => isBetween(y, 0, Math.floor(svg.getBoundingClientRect().height), 0))
-          .subscribe(({x,y}) => paddle.attr('y', y));
 }
 
 // the following simply runs your pong function on window load.  Make sure to leave it in place.

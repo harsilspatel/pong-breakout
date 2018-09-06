@@ -13,7 +13,7 @@ function isBetween(x: number, lowerBound: number, rangeLength: number, error: nu
     // console.log('isb')
     let upperBound = lowerBound + rangeLength;
     let absErrorByTwo = Math.floor(Math.abs(error)/2);
-    if (lowerBound - absErrorByTwo <= x && x <= upperBound + absErrorByTwo) {console.log('isB', x)}
+    // if (lowerBound - absErrorByTwo <= x && x <= upperBound + absErrorByTwo) {console.log('isB', x)}
     return lowerBound - absErrorByTwo <= x && x <= upperBound + absErrorByTwo;
 }
 
@@ -28,7 +28,7 @@ function isCollision(x: number, bound: number, error: number): boolean {
 }
 
 function reverseDirection(element: Elem, attributeLabel: string): number {
-    console.log('reversed ' + attributeLabel);
+    // console.log('reversed ' + attributeLabel);
     return -1*parseInt(element.attr(attributeLabel))
     // element.attr(attributeLabel, -1 * parseInt(element.attr(attributeLabel)))
     // console.log(element.attr(attributeLabel));

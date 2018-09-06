@@ -55,6 +55,14 @@ function breakout() {
     
     
 
+
+  const paddleArea = new Elem(svg, 'rect')
+    .attr('width', svg.getBoundingClientRect().width)
+    .attr('height', 100)
+    .attr('x', 0)
+    .attr('y', svg.getBoundingClientRect().height - 100)
+    .attr('fill', '#444444')
+
   let paddle = new Elem(svg, 'rect')
     .attr('x', 30)
     .attr('y', 580)
@@ -62,7 +70,12 @@ function breakout() {
     .attr('height', 3)
     .attr('fill', '#FFFFFF');
 
-  controlPaddleObservable2(paddle);
+  Observable
+    .fromEvent<MouseEvent>(svg, "mousemove")
+    .map(({clientX, clientY})=>({x: Math.floor(clientX - svg.getBoundingClientRect().left - parseInt(paddle.attr('width'))/2), y: Math.floor(clientY - svg.getBoundingClientRect().top - parseInt(paddle.attr('height'))/2)}))
+    .filter(({x}) => 0 <= x && x + parseInt(paddle.attr('width')) <= svg.getBoundingClientRect().width) //for left and right bounds
+    .filter(({y}) => isBetween(y, svg.getBoundingClientRect().height - 100, 100, 0))
+    .subscribe(({x,y}) => paddle.attr('x', x).attr('y', y));
 
   let ball = new Elem(svg, 'circle')
   .attr('cx', getRandomBetween(400,500))
@@ -71,6 +84,9 @@ function breakout() {
   .attr('fill', '#FFFFFF')
   .attr('xSpeed', speed)
   .attr('ySpeed', speed);
+
+  
+
 
   const mainInterval = Observable.interval(fps)
   .map(() => ({
@@ -89,9 +105,10 @@ function breakout() {
       ySpeed: parseInt(ball.attr('ySpeed')),
     }));
 
+
   // making the ball collide with the paddle
   mainObservable
-  .filter(({x,y,r,xSpeed,ySpeed}) => (isBetween(x, parseInt(paddle.attr('x')), parseInt(paddle.attr('width')), xSpeed) && isCollision(y+r, parseInt(paddle.attr('y')), ySpeed)))
+  .filter(({x,y,r,xSpeed,ySpeed}) => (isBetween(x, parseInt(paddle.attr('x')), parseInt(paddle.attr('width')), xSpeed) && isCollision(y+r, parseInt(paddle.attr('y')), 2*ySpeed))) //Please note that error here is 2*ySpeed, so that when paddle is being moving towards the ball it can hit it. However, as it is twice the normal error, it may look like the ball is not touching the paddle when striking.  
   .subscribe(({ySpeed}) =>  ball.attr('ySpeed', -1*ySpeed))
 
   // making ball collide with the left and right bounds
@@ -111,15 +128,6 @@ function breakout() {
   mainObservable
   .filter(({x,y,r}) => isCollision(y+r, Math.floor(svg.getBoundingClientRect().height), parseInt(ball.attr('ySpeed'))))
   .subscribe(_ => updateAndReset2(--lives, ball))
-
-//   mainObservable
-//   .map(({x,y,r, xSpeed, ySpeed}) => bricks.map((brick:Elem) => ({ brick, brickX:parseInt(brick.attr('x')), brickY:parseInt(brick.attr('y')), brickWidth: parseInt(brick.attr('width')), brickHeight: parseInt(brick.attr('height'))}))
-//   .filter(({brick, brickX, brickY, brickWidth, brickHeight}) => (
-//     (isBetween(x, brickX, brickWidth, xSpeed) && isCollision(y-r, brickY + brickHeight, ySpeed)) || //bottom
-//     (isBetween(x, brickX, brickWidth, xSpeed) && isCollision(y+r, brickY, ySpeed)) || //top
-//     (isBetween(y, brickY, brickHeight, ySpeed) && isCollision(x+r, brickX, xSpeed))
-//   )).map(({brick}) => removeAndReverse(bricks, brick, ball))
-// ).subscribe(_ => {})
 
 mainObservable
   .map(({x,y,r, xSpeed, ySpeed}) => bricks.map((brick:Elem) => ({ brick, brickX:parseInt(brick.attr('x')), brickY:parseInt(brick.attr('y')), brickWidth: parseInt(brick.attr('width')), brickHeight: parseInt(brick.attr('height'))}))
@@ -163,18 +171,6 @@ function updateAndReset2(lives: number, ball: Elem) {
   const livesLabel = document.getElementById("lives")!;
   livesLabel.innerHTML = `lives: ${lives}`;
   ball.attr('cx', getRandomBetween(400,500)).attr('cy', getRandomBetween(250,350))
-}
-
-function controlPaddleObservable2(paddle: Elem): void {
-  const
-    svg = document.getElementById("breakout")!,
-    svgLeft = Math.floor(svg.getBoundingClientRect().left),
-    o = Observable
-          .fromEvent<MouseEvent>(svg, "mousemove")
-          .map(({clientX, clientY})=>({x: clientX - svgLeft - parseInt(paddle.attr('width'))/2, y: clientY}))
-          .filter(({x,y}) => 0 <= x) //for upperBound
-          .filter(({x,y}) => (x + parseInt(paddle.attr('width')) <= parseInt(svg.getAttribute('width')!))) //for lowerBound
-          .subscribe(({x,y}) => paddle.attr('x', x));
 }
 
 // the following simply runs your pong function on window load.  Make sure to leave it in place.

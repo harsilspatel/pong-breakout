@@ -1,20 +1,33 @@
 "use strict";
 function pong() {
     let score1 = 0, score2 = 0, speed = 1, fps = 4;
-    const gameRounds = 3, svg = document.getElementById("canvas");
+    const gameRounds = 1, svg = document.getElementById("canvas");
+    let divider = new Elem(svg, 'line')
+        .attr('x1', svg.getBoundingClientRect().width / 2)
+        .attr('y1', 0)
+        .attr('x2', svg.getBoundingClientRect().width / 2)
+        .attr('y2', svg.getBoundingClientRect().height)
+        .attr('stroke', '#444444')
+        .attr('stroke-width', 4)
+        .attr('stroke-dasharray', 20);
     let leftPaddle = new Elem(svg, 'rect')
         .attr('x', 10)
         .attr('y', 80)
         .attr('width', 3)
         .attr('height', 120)
         .attr('fill', '#FFFFFF');
+    const paddleArea = new Elem(svg, 'rect')
+        .attr('width', 100)
+        .attr('height', svg.getBoundingClientRect().height)
+        .attr('x', svg.getBoundingClientRect().width - 100)
+        .attr('y', 0)
+        .attr('fill', '#444444');
     let rightPaddle = new Elem(svg, 'rect')
         .attr('x', 900 - 10 - 3)
         .attr('y', 70)
         .attr('width', 3)
         .attr('height', 120)
         .attr('fill', '#FFFFFF');
-    controlPaddleObservable(rightPaddle);
     let ball = new Elem(svg, 'circle')
         .attr('cx', getRandomBetween(400, 500))
         .attr('cy', getRandomBetween(250, 350))
@@ -22,6 +35,12 @@ function pong() {
         .attr('fill', '#FFFFFF')
         .attr('xSpeed', speed)
         .attr('ySpeed', speed);
+    Observable
+        .fromEvent(svg, "mousemove")
+        .map(({ clientX, clientY }) => ({ x: Math.floor(clientX - svg.getBoundingClientRect().left - parseInt(rightPaddle.attr('width')) / 2), y: Math.floor(clientY - svg.getBoundingClientRect().top - parseInt(rightPaddle.attr('height')) / 2) }))
+        .filter(({ x, y }) => 0 <= y && (y + parseInt(rightPaddle.attr('height')) <= (svg.getBoundingClientRect().height)))
+        .filter(({ x, y }) => isBetween(x, svg.getBoundingClientRect().width - 100, 100, 0))
+        .subscribe(({ x, y }) => rightPaddle.attr('x', x).attr('y', y));
     const mainInterval = Observable.interval(fps);
     const mainObservable = mainInterval
         .takeUntil(mainInterval.filter(_ => score1 == gameRounds || score2 == gameRounds))
@@ -37,7 +56,7 @@ function pong() {
     }));
     mainObservable
         .map(({ x, y, r, xSpeed, ySpeed }) => ({ x, y, r, xSpeed, ySpeed, paddleHeight: parseInt(rightPaddle.attr('height')), paddleWidth: parseInt(rightPaddle.attr('width')) }))
-        .filter(({ x, y, r, xSpeed, ySpeed, paddleHeight, paddleWidth }) => (isCollision(x + r, parseInt(rightPaddle.attr('x')), xSpeed) &&
+        .filter(({ x, y, r, xSpeed, ySpeed, paddleHeight, paddleWidth }) => (isCollision(x + r, parseInt(rightPaddle.attr('x')), 2 * xSpeed) &&
         (isBetween(y, parseInt(rightPaddle.attr('y')), paddleHeight, ySpeed))) ||
         (isCollision(x - r, parseInt(leftPaddle.attr('x')) + paddleWidth, xSpeed) &&
             (isBetween(y, parseInt(leftPaddle.attr('y')), paddleHeight, ySpeed))))
@@ -66,14 +85,6 @@ function scored(score1, score2, gameRounds) {
     else if (score1 == gameRounds) {
         result.innerHTML = "Congratulations player 1 😎";
     }
-}
-function controlPaddleObservable(paddle) {
-    const svg = document.getElementById("canvas"), svgTop = Math.floor(svg.getBoundingClientRect().top), o = Observable
-        .fromEvent(svg, "mousemove")
-        .map(({ clientX, clientY }) => ({ x: clientX, y: clientY - svgTop - parseInt(paddle.attr('height')) / 2 }))
-        .filter(({ x, y }) => 0 <= y)
-        .filter(({ x, y }) => (y + parseInt(paddle.attr('height')) <= parseInt(svg.getAttribute('height'))))
-        .subscribe(({ x, y }) => paddle.attr('y', y));
 }
 if (typeof window != 'undefined')
     window.onload = () => {

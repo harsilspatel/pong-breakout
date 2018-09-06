@@ -24,13 +24,24 @@ function breakout() {
         .attr('height', 30)
         .attr('fill', ('#' + getRandomBetween(0 + 30, 255 - 30).toString(16) + getRandomBetween(0 + 30, 255 - 30).toString(16) + getRandomBetween(0 + 30, 255 - 30).toString(16))))))
         .subscribe(_ => { });
+    const paddleArea = new Elem(svg, 'rect')
+        .attr('width', svg.getBoundingClientRect().width)
+        .attr('height', 100)
+        .attr('x', 0)
+        .attr('y', svg.getBoundingClientRect().height - 100)
+        .attr('fill', '#444444');
     let paddle = new Elem(svg, 'rect')
         .attr('x', 30)
         .attr('y', 580)
         .attr('width', 120)
         .attr('height', 3)
         .attr('fill', '#FFFFFF');
-    controlPaddleObservable2(paddle);
+    Observable
+        .fromEvent(svg, "mousemove")
+        .map(({ clientX, clientY }) => ({ x: Math.floor(clientX - svg.getBoundingClientRect().left - parseInt(paddle.attr('width')) / 2), y: Math.floor(clientY - svg.getBoundingClientRect().top - parseInt(paddle.attr('height')) / 2) }))
+        .filter(({ x }) => 0 <= x && x + parseInt(paddle.attr('width')) <= svg.getBoundingClientRect().width)
+        .filter(({ y }) => isBetween(y, svg.getBoundingClientRect().height - 100, 100, 0))
+        .subscribe(({ x, y }) => paddle.attr('x', x).attr('y', y));
     let ball = new Elem(svg, 'circle')
         .attr('cx', getRandomBetween(400, 500))
         .attr('cy', getRandomBetween(250, 350))
@@ -54,7 +65,7 @@ function breakout() {
         ySpeed: parseInt(ball.attr('ySpeed')),
     }));
     mainObservable
-        .filter(({ x, y, r, xSpeed, ySpeed }) => (isBetween(x, parseInt(paddle.attr('x')), parseInt(paddle.attr('width')), xSpeed) && isCollision(y + r, parseInt(paddle.attr('y')), ySpeed)))
+        .filter(({ x, y, r, xSpeed, ySpeed }) => (isBetween(x, parseInt(paddle.attr('x')), parseInt(paddle.attr('width')), xSpeed) && isCollision(y + r, parseInt(paddle.attr('y')), 2 * ySpeed)))
         .subscribe(({ ySpeed }) => ball.attr('ySpeed', -1 * ySpeed));
     mainObservable
         .filter(({ x, r }) => isCollision(x + r, Math.floor(svg.getBoundingClientRect().width), parseInt(ball.attr('xSpeed'))) || isCollision(x - r, 0, parseInt(ball.attr('xSpeed'))))
@@ -94,14 +105,6 @@ function updateAndReset2(lives, ball) {
     const livesLabel = document.getElementById("lives");
     livesLabel.innerHTML = `lives: ${lives}`;
     ball.attr('cx', getRandomBetween(400, 500)).attr('cy', getRandomBetween(250, 350));
-}
-function controlPaddleObservable2(paddle) {
-    const svg = document.getElementById("breakout"), svgLeft = Math.floor(svg.getBoundingClientRect().left), o = Observable
-        .fromEvent(svg, "mousemove")
-        .map(({ clientX, clientY }) => ({ x: clientX - svgLeft - parseInt(paddle.attr('width')) / 2, y: clientY }))
-        .filter(({ x, y }) => 0 <= x)
-        .filter(({ x, y }) => (x + parseInt(paddle.attr('width')) <= parseInt(svg.getAttribute('width'))))
-        .subscribe(({ x, y }) => paddle.attr('x', x));
 }
 if (typeof window != 'undefined')
     window.onload = () => {
