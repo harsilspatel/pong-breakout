@@ -5,8 +5,10 @@ function breakout() {
 
   var speed = 1,
     lives = 1,
-    fps = 10,
+    fps = 5,
     bricks: Elem[] = [];
+    const svg = document.getElementById("breakout")!;
+
 
   const bricksObservable = Observable.interval(1);
   bricksObservable
@@ -40,11 +42,19 @@ function breakout() {
       .attr('fill', ('#' + getRandomBetween(0+30,255-30).toString(16) + getRandomBetween(0+30,255-30).toString(16) + getRandomBetween(0+30,255-30).toString(16))) //16777215 being FFFFFF
     )))
     .subscribe(_ => {})
+
+    // bricks.push(
+    //   new Elem(svg, 'rect')
+    //   .attr('x',500)
+    //   .attr('y', 300)
+    //   .attr('width', 200)
+    //   .attr('height', 300)
+    //   .attr('fill', ('#' + getRandomBetween(0+30,255-30).toString(16) + getRandomBetween(0+30,255-30).toString(16) + getRandomBetween(0+30,255-30).toString(16)))
+    // )
     
     
     
 
-  const svg = document.getElementById("breakout")!;
   let paddle = new Elem(svg, 'rect')
     .attr('x', 30)
     .attr('y', 580)
@@ -62,58 +72,83 @@ function breakout() {
   .attr('xSpeed', speed)
   .attr('ySpeed', speed);
 
-  const ballInterval = Observable.interval(fps)
+  const mainInterval = Observable.interval(fps)
   .map(() => ({
     x: parseInt(ball.attr('cx')),
     y: parseInt(ball.attr('cy')),
     r: parseInt(ball.attr('r'))
   }));
 
-  const ballOberservable = ballInterval
-    .takeUntil(ballInterval.filter(_ => lives == 0))
+  const mainObservable = mainInterval
+    .takeUntil(mainInterval.filter(_ => lives == 0))
     .map(() => ({
       x: parseInt(ball.attr('cx')),
       y: parseInt(ball.attr('cy')),
-      r: parseInt(ball.attr('r'))
+      r: parseInt(ball.attr('r')),
+      xSpeed: parseInt(ball.attr('xSpeed')),
+      ySpeed: parseInt(ball.attr('ySpeed')),
     }));
 
-  ballOberservable
-  .subscribe(({x,y,r}) => (isBetween(x, parseInt(paddle.attr('x')), parseInt(paddle.attr('width')), parseInt(ball.attr('xSpeed'))) && isBetween(y+r, parseInt(paddle.attr('y')), 0, parseInt(ball.attr('ySpeed')))? ball.attr('ySpeed', -1*parseInt(ball.attr('ySpeed'))): (parseInt(ball.attr('ySpeed')))))
+  // making the ball collide with the paddle
+  mainObservable
+  .filter(({x,y,r,xSpeed,ySpeed}) => (isBetween(x, parseInt(paddle.attr('x')), parseInt(paddle.attr('width')), xSpeed) && isCollision(y+r, parseInt(paddle.attr('y')), ySpeed)))
+  .subscribe(({ySpeed}) =>  ball.attr('ySpeed', -1*ySpeed))
 
   // making ball collide with the left and right bounds
-  ballOberservable
-  .map(({x,r}) => ({x,r, rightBound: Math.floor(svg.getBoundingClientRect().right) - Math.floor(svg.getBoundingClientRect().left)}))
-    .map(({x,r,rightBound}) => isBetween(x+r, rightBound, 0, parseInt(ball.attr('xSpeed'))) || isBetween(x-r, 0, 0, parseInt(ball.attr('xSpeed'))) ? ball.attr('xSpeed', -1*parseInt(ball.attr('xSpeed'))): (parseInt(ball.attr('xSpeed'))))
-    .subscribe(({}) => (ball.attr('cx', parseInt(ball.attr('xSpeed'))+parseInt(ball.attr('cx')))))
+  mainObservable
+    .filter(({x,r}) => isCollision(x+r, Math.floor(svg.getBoundingClientRect().width), parseInt(ball.attr('xSpeed'))) || isCollision(x-r, 0, parseInt(ball.attr('xSpeed'))))
+    .subscribe(({xSpeed}) => ball.attr('xSpeed', -1*xSpeed))
 
     // making the ball collide the top
-  ballOberservable
-    .map(({y,r}) => isBetween(y-r, 0, 0, parseInt(ball.attr('ySpeed'))) ? (ball.attr('ySpeed', -1*parseInt(ball.attr('ySpeed')))): (parseInt(ball.attr('ySpeed'))))
-    .subscribe(({}) => (ball.attr('cy', parseInt(ball.attr('ySpeed'))+parseInt(ball.attr('cy')))))
+  mainObservable
+    .filter(({y,r}) => isCollision(y-r, 0, parseInt(ball.attr('ySpeed'))))
+    .subscribe(({ySpeed}) => (ball.attr('ySpeed', -1*ySpeed)))
+
+    // making the ball move
+  mainObservable.subscribe(({x, y, xSpeed, ySpeed}) => ball.attr('cx', x+xSpeed).attr('cy',y+ySpeed))
   
     // resetting the game if ball strikes bottom
-  ballOberservable
-  .map(({x,y,r}) => isBetween(y+r, Math.floor(svg.getBoundingClientRect().height), 0, parseInt(ball.attr('ySpeed'))) ? updateAndReset2(--lives, ball) : true)
-  .subscribe(_ => {})
+  mainObservable
+  .filter(({x,y,r}) => isCollision(y+r, Math.floor(svg.getBoundingClientRect().height), parseInt(ball.attr('ySpeed'))))
+  .subscribe(_ => updateAndReset2(--lives, ball))
 
-  ballOberservable
-  .map(({x,y,r}) => bricks.forEach( brick => (
-    isBetween(y-r, parseInt(brick.attr('y')) + parseInt(brick.attr('height')), 0, parseInt(ball.attr('ySpeed'))) && isBetween(x, parseInt(brick.attr('x')), parseInt(brick.attr('width')), parseInt(ball.attr('xSpeed'))) ? removeAndReverse(bricks, brick, ball) : true
-  )))
-  .subscribe(_ => {})
+//   mainObservable
+//   .map(({x,y,r, xSpeed, ySpeed}) => bricks.map((brick:Elem) => ({ brick, brickX:parseInt(brick.attr('x')), brickY:parseInt(brick.attr('y')), brickWidth: parseInt(brick.attr('width')), brickHeight: parseInt(brick.attr('height'))}))
+//   .filter(({brick, brickX, brickY, brickWidth, brickHeight}) => (
+//     (isBetween(x, brickX, brickWidth, xSpeed) && isCollision(y-r, brickY + brickHeight, ySpeed)) || //bottom
+//     (isBetween(x, brickX, brickWidth, xSpeed) && isCollision(y+r, brickY, ySpeed)) || //top
+//     (isBetween(y, brickY, brickHeight, ySpeed) && isCollision(x+r, brickX, xSpeed))
+//   )).map(({brick}) => removeAndReverse(bricks, brick, ball))
+// ).subscribe(_ => {})
+
+mainObservable
+  .map(({x,y,r, xSpeed, ySpeed}) => bricks.map((brick:Elem) => ({ brick, brickX:parseInt(brick.attr('x')), brickY:parseInt(brick.attr('y')), brickWidth: parseInt(brick.attr('width')), brickHeight: parseInt(brick.attr('height'))}))
+  .filter(({brick, brickX, brickY, brickWidth, brickHeight}) => (
+    (isBetween(x, brickX, brickWidth, xSpeed) && isCollision(y+r, brickY, ySpeed)) || //top
+    (isBetween(x, brickX, brickWidth, xSpeed) && isCollision(y-r, brickY + brickHeight, ySpeed)) //bottom
+  )).map(({brick}) => removeAndReverse(bricks, brick, ball,'ySpeed')))
+.subscribe(_ => {})
+
+mainObservable
+  .map(({x,y,r, xSpeed, ySpeed}) => bricks.map((brick:Elem) => ({ brick, brickX:parseInt(brick.attr('x')), brickY:parseInt(brick.attr('y')), brickWidth: parseInt(brick.attr('width')), brickHeight: parseInt(brick.attr('height'))}))
+  .filter(({brick, brickX, brickY, brickWidth, brickHeight}) => (
+    (isBetween(y, brickY, brickHeight, ySpeed) && isCollision(x+r, brickX, xSpeed)) ||  //left
+    (isBetween(y, brickY, brickHeight, ySpeed) && isCollision(x-r, brickX + brickWidth, xSpeed)) //right
+  )).map(({brick}) => removeAndReverse(bricks, brick, ball,'xSpeed')))
+.subscribe(_ => {})
 
 }
 
-function removeAndReverse(bricks:Elem[], brick: Elem, ball: Elem) {
+function removeAndReverse(bricks:Elem[], brick: Elem, ball: Elem, attributeLabel:string) {
   brick.elem.remove();
-  console.log('before' ,bricks.length)
+  // console.log('before' ,bricks.length)
   let x = bricks.indexOf(brick)
-  console.log(x)
+  // console.log(x)
 
   bricks.splice(x,1);
-  console.log('after' ,bricks.length)
+  // console.log('after' ,bricks.length)
 
-  ball.attr('ySpeed', -1*parseInt(ball.attr('ySpeed')))
+  ball.attr(attributeLabel, -1*parseInt(ball.attr(attributeLabel)))
 }
 
 function endGame2(score1: number, score2: number){

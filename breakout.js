@@ -1,6 +1,7 @@
 "use strict";
 function breakout() {
-    var speed = 1, lives = 1, fps = 10, bricks = [];
+    var speed = 1, lives = 1, fps = 5, bricks = [];
+    const svg = document.getElementById("breakout");
     const bricksObservable = Observable.interval(1);
     bricksObservable
         .takeUntil(bricksObservable.filter(i => i == 11))
@@ -23,7 +24,6 @@ function breakout() {
         .attr('height', 30)
         .attr('fill', ('#' + getRandomBetween(0 + 30, 255 - 30).toString(16) + getRandomBetween(0 + 30, 255 - 30).toString(16) + getRandomBetween(0 + 30, 255 - 30).toString(16))))))
         .subscribe(_ => { });
-    const svg = document.getElementById("breakout");
     let paddle = new Elem(svg, 'rect')
         .attr('x', 30)
         .attr('y', 580)
@@ -38,43 +38,50 @@ function breakout() {
         .attr('fill', '#FFFFFF')
         .attr('xSpeed', speed)
         .attr('ySpeed', speed);
-    const ballInterval = Observable.interval(fps)
+    const mainInterval = Observable.interval(fps)
         .map(() => ({
         x: parseInt(ball.attr('cx')),
         y: parseInt(ball.attr('cy')),
         r: parseInt(ball.attr('r'))
     }));
-    const ballOberservable = ballInterval
-        .takeUntil(ballInterval.filter(_ => lives == 0))
+    const mainObservable = mainInterval
+        .takeUntil(mainInterval.filter(_ => lives == 0))
         .map(() => ({
         x: parseInt(ball.attr('cx')),
         y: parseInt(ball.attr('cy')),
-        r: parseInt(ball.attr('r'))
+        r: parseInt(ball.attr('r')),
+        xSpeed: parseInt(ball.attr('xSpeed')),
+        ySpeed: parseInt(ball.attr('ySpeed')),
     }));
-    ballOberservable
-        .subscribe(({ x, y, r }) => (isBetween(x, parseInt(paddle.attr('x')), parseInt(paddle.attr('width')), parseInt(ball.attr('xSpeed'))) && isBetween(y + r, parseInt(paddle.attr('y')), 0, parseInt(ball.attr('ySpeed'))) ? ball.attr('ySpeed', -1 * parseInt(ball.attr('ySpeed'))) : (parseInt(ball.attr('ySpeed')))));
-    ballOberservable
-        .map(({ x, r }) => ({ x, r, rightBound: Math.floor(svg.getBoundingClientRect().right) - Math.floor(svg.getBoundingClientRect().left) }))
-        .map(({ x, r, rightBound }) => isBetween(x + r, rightBound, 0, parseInt(ball.attr('xSpeed'))) || isBetween(x - r, 0, 0, parseInt(ball.attr('xSpeed'))) ? ball.attr('xSpeed', -1 * parseInt(ball.attr('xSpeed'))) : (parseInt(ball.attr('xSpeed'))))
-        .subscribe(({}) => (ball.attr('cx', parseInt(ball.attr('xSpeed')) + parseInt(ball.attr('cx')))));
-    ballOberservable
-        .map(({ y, r }) => isBetween(y - r, 0, 0, parseInt(ball.attr('ySpeed'))) ? (ball.attr('ySpeed', -1 * parseInt(ball.attr('ySpeed')))) : (parseInt(ball.attr('ySpeed'))))
-        .subscribe(({}) => (ball.attr('cy', parseInt(ball.attr('ySpeed')) + parseInt(ball.attr('cy')))));
-    ballOberservable
-        .map(({ x, y, r }) => isBetween(y + r, Math.floor(svg.getBoundingClientRect().height), 0, parseInt(ball.attr('ySpeed'))) ? updateAndReset2(--lives, ball) : true)
+    mainObservable
+        .filter(({ x, y, r, xSpeed, ySpeed }) => (isBetween(x, parseInt(paddle.attr('x')), parseInt(paddle.attr('width')), xSpeed) && isCollision(y + r, parseInt(paddle.attr('y')), ySpeed)))
+        .subscribe(({ ySpeed }) => ball.attr('ySpeed', -1 * ySpeed));
+    mainObservable
+        .filter(({ x, r }) => isCollision(x + r, Math.floor(svg.getBoundingClientRect().width), parseInt(ball.attr('xSpeed'))) || isCollision(x - r, 0, parseInt(ball.attr('xSpeed'))))
+        .subscribe(({ xSpeed }) => ball.attr('xSpeed', -1 * xSpeed));
+    mainObservable
+        .filter(({ y, r }) => isCollision(y - r, 0, parseInt(ball.attr('ySpeed'))))
+        .subscribe(({ ySpeed }) => (ball.attr('ySpeed', -1 * ySpeed)));
+    mainObservable.subscribe(({ x, y, xSpeed, ySpeed }) => ball.attr('cx', x + xSpeed).attr('cy', y + ySpeed));
+    mainObservable
+        .filter(({ x, y, r }) => isCollision(y + r, Math.floor(svg.getBoundingClientRect().height), parseInt(ball.attr('ySpeed'))))
+        .subscribe(_ => updateAndReset2(--lives, ball));
+    mainObservable
+        .map(({ x, y, r, xSpeed, ySpeed }) => bricks.map((brick) => ({ brick, brickX: parseInt(brick.attr('x')), brickY: parseInt(brick.attr('y')), brickWidth: parseInt(brick.attr('width')), brickHeight: parseInt(brick.attr('height')) }))
+        .filter(({ brick, brickX, brickY, brickWidth, brickHeight }) => ((isBetween(x, brickX, brickWidth, xSpeed) && isCollision(y + r, brickY, ySpeed)) ||
+        (isBetween(x, brickX, brickWidth, xSpeed) && isCollision(y - r, brickY + brickHeight, ySpeed)))).map(({ brick }) => removeAndReverse(bricks, brick, ball, 'ySpeed')))
         .subscribe(_ => { });
-    ballOberservable
-        .map(({ x, y, r }) => bricks.forEach(brick => (isBetween(y - r, parseInt(brick.attr('y')) + parseInt(brick.attr('height')), 0, parseInt(ball.attr('ySpeed'))) && isBetween(x, parseInt(brick.attr('x')), parseInt(brick.attr('width')), parseInt(ball.attr('xSpeed'))) ? removeAndReverse(bricks, brick, ball) : true)))
+    mainObservable
+        .map(({ x, y, r, xSpeed, ySpeed }) => bricks.map((brick) => ({ brick, brickX: parseInt(brick.attr('x')), brickY: parseInt(brick.attr('y')), brickWidth: parseInt(brick.attr('width')), brickHeight: parseInt(brick.attr('height')) }))
+        .filter(({ brick, brickX, brickY, brickWidth, brickHeight }) => ((isBetween(y, brickY, brickHeight, ySpeed) && isCollision(x + r, brickX, xSpeed)) ||
+        (isBetween(y, brickY, brickHeight, ySpeed) && isCollision(x - r, brickX + brickWidth, xSpeed)))).map(({ brick }) => removeAndReverse(bricks, brick, ball, 'xSpeed')))
         .subscribe(_ => { });
 }
-function removeAndReverse(bricks, brick, ball) {
+function removeAndReverse(bricks, brick, ball, attributeLabel) {
     brick.elem.remove();
-    console.log('before', bricks.length);
     let x = bricks.indexOf(brick);
-    console.log(x);
     bricks.splice(x, 1);
-    console.log('after', bricks.length);
-    ball.attr('ySpeed', -1 * parseInt(ball.attr('ySpeed')));
+    ball.attr(attributeLabel, -1 * parseInt(ball.attr(attributeLabel)));
 }
 function endGame2(score1, score2) {
     const score = document.getElementById("score");
