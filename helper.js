@@ -10,6 +10,9 @@ function isBetween(x, lowerBound, rangeLength, error) {
     }
     return lowerBound - absErrorByTwo <= x && x <= upperBound + absErrorByTwo;
 }
+function isCollision(x, bound, error) {
+    return isBetween(x, bound, 0, error);
+}
 function reverseDirection(element, attributeLabel) {
     console.log('reversed ' + attributeLabel);
     return -1 * parseInt(element.attr(attributeLabel));

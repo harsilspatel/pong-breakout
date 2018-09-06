@@ -17,6 +17,16 @@ function isBetween(x: number, lowerBound: number, rangeLength: number, error: nu
     return lowerBound - absErrorByTwo <= x && x <= upperBound + absErrorByTwo;
 }
 
+/**
+ * This function is for brevity purposes only, it uses the inBetween function to do the calculations
+ * @param x 
+ * @param bound 
+ * @param error 
+ */
+function isCollision(x: number, bound: number, error: number): boolean {
+    return isBetween(x, bound, 0, error); // rangeLength is 0 as we're checking if the object collides with boundary.
+}
+
 function reverseDirection(element: Elem, attributeLabel: string): number {
     console.log('reversed ' + attributeLabel);
     return -1*parseInt(element.attr(attributeLabel))

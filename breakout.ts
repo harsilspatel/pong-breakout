@@ -78,33 +78,26 @@ function breakout() {
     }));
 
   ballOberservable
-  // .subscribe(({x,y,r}) => (parseInt(paddle.attr('x')) <= x && x <= parseInt(paddle.attr('x')) + parseInt(paddle.attr('width')) && parseInt(paddle.attr('y')) - parseInt(ball.attr('ySpeed')) +2 <= y + r && y + r < parseInt(paddle.attr('y')) +2 ? ball.attr('ySpeed', -1*parseInt(ball.attr('ySpeed'))): (parseInt(ball.attr('ySpeed')))))
   .subscribe(({x,y,r}) => (isBetween(x, parseInt(paddle.attr('x')), parseInt(paddle.attr('width')), parseInt(ball.attr('xSpeed'))) && isBetween(y+r, parseInt(paddle.attr('y')), 0, parseInt(ball.attr('ySpeed')))? ball.attr('ySpeed', -1*parseInt(ball.attr('ySpeed'))): (parseInt(ball.attr('ySpeed')))))
 
   // making ball collide with the left and right bounds
   ballOberservable
   .map(({x,r}) => ({x,r, rightBound: Math.floor(svg.getBoundingClientRect().right) - Math.floor(svg.getBoundingClientRect().left)}))
-    // .filter(({y,r,bottomBound}) => (0 < (y - r)) && ((y + r) < bottomBound))
-    // .map(({x,r,rightBound}) => (rightBound <= x + r) || (x - r <= 0) ? ball.attr('xSpeed', -1*parseInt(ball.attr('xSpeed'))): (parseInt(ball.attr('xSpeed'))))
     .map(({x,r,rightBound}) => isBetween(x+r, rightBound, 0, parseInt(ball.attr('xSpeed'))) || isBetween(x-r, 0, 0, parseInt(ball.attr('xSpeed'))) ? ball.attr('xSpeed', -1*parseInt(ball.attr('xSpeed'))): (parseInt(ball.attr('xSpeed'))))
-    // .map(({x,r,rightBound}) => isBetween(x-r, 0, 0, parseInt(ball.attr('xSpeed')) + 3) || isBetween(x+r, rightBound, rightBound, parseInt(ball.attr('xSpeed'))) ? ball.attr('xSpeed', -1*parseInt(ball.attr('xSpeed'))): (parseInt(ball.attr('xSpeed'))))
     .subscribe(({}) => (ball.attr('cx', parseInt(ball.attr('xSpeed'))+parseInt(ball.attr('cx')))))
 
     // making the ball collide the top
   ballOberservable
-    // .map(({y,r}) => (y - r <= 0) ? (ball.attr('ySpeed', -1*parseInt(ball.attr('ySpeed')))): (parseInt(ball.attr('ySpeed'))))
     .map(({y,r}) => isBetween(y-r, 0, 0, parseInt(ball.attr('ySpeed'))) ? (ball.attr('ySpeed', -1*parseInt(ball.attr('ySpeed')))): (parseInt(ball.attr('ySpeed'))))
     .subscribe(({}) => (ball.attr('cy', parseInt(ball.attr('ySpeed'))+parseInt(ball.attr('cy')))))
   
     // resetting the game if ball strikes bottom
   ballOberservable
-  // .map(({x,y,r}) => (y + r - parseInt(ball.attr('ySpeed'))) >= Math.floor(svg.getBoundingClientRect().bottom) - Math.floor(svg.getBoundingClientRect().top) ? updateAndReset2(--lives, ball) : true)
   .map(({x,y,r}) => isBetween(y+r, Math.floor(svg.getBoundingClientRect().height), 0, parseInt(ball.attr('ySpeed'))) ? updateAndReset2(--lives, ball) : true)
   .subscribe(_ => {})
 
   ballOberservable
   .map(({x,y,r}) => bricks.forEach( brick => (
-    // parseInt(brick.attr('y')) + parseInt(brick.attr('height')) == y - r + parseInt(ball.attr('ySpeed')) && parseInt(brick.attr('x')) <= x && x <= parseInt(brick.attr('x')) + parseInt(brick.attr('width')) ? removeAndReverse(bricks, brick, ball) : true
     isBetween(y-r, parseInt(brick.attr('y')) + parseInt(brick.attr('height')), 0, parseInt(ball.attr('ySpeed'))) && isBetween(x, parseInt(brick.attr('x')), parseInt(brick.attr('width')), parseInt(ball.attr('xSpeed'))) ? removeAndReverse(bricks, brick, ball) : true
   )))
   .subscribe(_ => {})
