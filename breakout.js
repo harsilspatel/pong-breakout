@@ -1,6 +1,6 @@
 "use strict";
 function breakout() {
-    var speed = 1, lives = 1, fps = 5, bricks = [];
+    var speed = 1, lives = 3, fps = 5, bricks = [];
     const svg = document.getElementById("breakout");
     const bricksObservable = Observable.interval(1);
     bricksObservable
@@ -56,7 +56,7 @@ function breakout() {
         r: parseInt(ball.attr('r'))
     }));
     const mainObservable = mainInterval
-        .takeUntil(mainInterval.filter(_ => lives == 0))
+        .takeUntil(mainInterval.filter(_ => bricks.length == 0 || lives == 0))
         .map(() => ({
         x: parseInt(ball.attr('cx')),
         y: parseInt(ball.attr('cy')),
@@ -76,17 +76,19 @@ function breakout() {
     mainObservable.subscribe(({ x, y, xSpeed, ySpeed }) => ball.attr('cx', x + xSpeed).attr('cy', y + ySpeed));
     mainObservable
         .filter(({ x, y, r }) => isCollision(y + r, Math.floor(svg.getBoundingClientRect().height), parseInt(ball.attr('ySpeed'))))
-        .subscribe(_ => updateAndReset2(--lives, ball));
+        .subscribe(_ => updateAndReset(--lives, ball));
     mainObservable
         .map(({ x, y, r, xSpeed, ySpeed }) => bricks.map((brick) => ({ brick, brickX: parseInt(brick.attr('x')), brickY: parseInt(brick.attr('y')), brickWidth: parseInt(brick.attr('width')), brickHeight: parseInt(brick.attr('height')) }))
         .filter(({ brick, brickX, brickY, brickWidth, brickHeight }) => ((isBetween(x, brickX, brickWidth, xSpeed) && isCollision(y + r, brickY, ySpeed)) ||
         (isBetween(x, brickX, brickWidth, xSpeed) && isCollision(y - r, brickY + brickHeight, ySpeed)))).map(({ brick }) => removeAndReverse(bricks, brick, ball, 'ySpeed')))
-        .subscribe(_ => { });
+        .filter(_ => bricks.length == 0)
+        .subscribe(_ => document.getElementById("lives").innerHTML = "Awesome, you won! 🤩");
     mainObservable
         .map(({ x, y, r, xSpeed, ySpeed }) => bricks.map((brick) => ({ brick, brickX: parseInt(brick.attr('x')), brickY: parseInt(brick.attr('y')), brickWidth: parseInt(brick.attr('width')), brickHeight: parseInt(brick.attr('height')) }))
         .filter(({ brick, brickX, brickY, brickWidth, brickHeight }) => ((isBetween(y, brickY, brickHeight, ySpeed) && isCollision(x + r, brickX, xSpeed)) ||
         (isBetween(y, brickY, brickHeight, ySpeed) && isCollision(x - r, brickX + brickWidth, xSpeed)))).map(({ brick }) => removeAndReverse(bricks, brick, ball, 'xSpeed')))
-        .subscribe(_ => { });
+        .filter(_ => bricks.length == 0)
+        .subscribe(_ => document.getElementById("lives").innerHTML = "Awesome, you won! 🤩");
 }
 function removeAndReverse(bricks, brick, ball, attributeLabel) {
     brick.elem.remove();
@@ -94,17 +96,11 @@ function removeAndReverse(bricks, brick, ball, attributeLabel) {
     bricks.splice(x, 1);
     ball.attr(attributeLabel, -1 * parseInt(ball.attr(attributeLabel)));
 }
-function endGame2(score1, score2) {
-    const score = document.getElementById("score");
-    score2 == 5 ?
-        score.innerHTML = "Congratulations player2" :
-        score.innerHTML = "Congratulations player1";
-}
-function updateAndReset2(lives, ball) {
+function updateAndReset(lives, ball) {
     console.log('resetted the game!');
     const livesLabel = document.getElementById("lives");
-    livesLabel.innerHTML = `lives: ${lives}`;
-    ball.attr('cx', getRandomBetween(400, 500)).attr('cy', getRandomBetween(250, 350));
+    livesLabel.innerHTML = `Lives: ${"❤️".repeat(lives)}`;
+    ball.attr('cx', getRandomBetween(400, 500)).attr('cy', getRandomBetween(250, 350)).attr('xSpeed', -1 * parseInt(ball.attr('xSpeed')));
 }
 if (typeof window != 'undefined')
     window.onload = () => {

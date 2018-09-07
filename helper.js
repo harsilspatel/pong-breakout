@@ -10,7 +10,10 @@ function isBetween(x, lowerBound, rangeLength, error) {
 function isCollision(x, bound, error) {
     return isBetween(x, bound, 0, error);
 }
-function reverseDirection(element, attributeLabel) {
-    return -1 * parseInt(element.attr(attributeLabel));
+function getEmojiNumber(n) {
+    const emojiNumbers = ["0️⃣", "1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣", "9️⃣"];
+    return n.toString().split("")
+        .map(digit => emojiNumbers[(parseInt(digit))])
+        .reduce((string, emoji) => string + emoji, "");
 }
 //# sourceMappingURL=helper.js.map

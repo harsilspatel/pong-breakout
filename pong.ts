@@ -16,10 +16,10 @@ function pong() {
   let
     score1 = 0,
     score2 = 0,
-    speed = 1,
-    fps = 4;
+    speed = 4,
+    fps = 10;
   const
-    gameRounds = 1,
+    gameRounds = 5,
   svg = document.getElementById("canvas")!;
 
   let divider = new Elem(svg, 'line')
@@ -113,31 +113,37 @@ function pong() {
 
 
     // making left paddle track the ball 
+
   mainObservable
-    .map(({y}) => ({y, paddleHeight:parseInt(rightPaddle.attr('height'))}))
-    .filter(({y,paddleHeight}) => isBetween(y, Math.floor(0+paddleHeight/2), Math.floor(svg.getBoundingClientRect().height - paddleHeight),0))
-    .subscribe(({y, paddleHeight}) => leftPaddle.attr('y', y - Math.floor(paddleHeight/2)))
+  .map(({y}) => ({y, paddleHeight:parseInt(rightPaddle.attr('height'))}))
+  .filter(({y,paddleHeight}) => isBetween(y, Math.floor(0+paddleHeight/2), Math.floor(svg.getBoundingClientRect().height - paddleHeight),0))
+  .subscribe(({y, paddleHeight}) => leftPaddle.attr('y', y - Math.floor(paddleHeight/2)))
+
+  // mainObservable
+  //   .map(({x, y, ySpeed}) => ({x, y,ySpeed, paddleY: parseInt(leftPaddle.attr('y')), paddleHeightByTwo: Math.floor(parseInt(rightPaddle.attr('height'))/2)}))
+  //   .filter(({y,paddleHeightByTwo}) => isBetween(y, Math.floor(0+paddleHeightByTwo), Math.floor(svg.getBoundingClientRect().height - 2*paddleHeightByTwo),0))
+  //   .filter(({x}) => x < svg.getBoundingClientRect().width/2)
+  //   .forEach(({y, paddleY, paddleHeightByTwo, ySpeed}) => console.log(y,paddleY, paddleHeightByTwo, Math.floor(y - (paddleY + paddleHeightByTwo)), Math.floor(y - (paddleY + paddleHeightByTwo)) > 0))
+  //   .subscribe(({y, paddleY, paddleHeightByTwo, ySpeed}) => leftPaddle.attr('y', Math.floor(y - (paddleY + paddleHeightByTwo)) > 0 ? paddleY + Math.abs(ySpeed/2) : paddleY - Math.abs(ySpeed/2) ))
 
 // resetting the game 
 mainObservable
 .filter(({x,xSpeed,r}) => isCollision(x-r, 0, xSpeed) || isCollision(x+r, Math.floor(svg.getBoundingClientRect().right) - Math.floor(svg.getBoundingClientRect().left), parseInt(ball.attr('xSpeed'))))
 // .map(({x,score1,score2}) => document.getElementById("score")!.innerHTML = (x < 0 ? `${score1} ${++score2}` : `${++score1} ${score2}`))
 // .map(({score1,score2,gameRounds}) => document.getElementById("score")!.innerHTML = ())
-.map(({x}) => (x < 0 ? scored(score1,++score2,gameRounds) : scored(++score1,score2,gameRounds))) 
-.subscribe(_ => ball.attr('cx', getRandomBetween(400,500)).attr('cy', getRandomBetween(250,350)))
-
+.forEach(({x}) => (x < svg.getBoundingClientRect().width/2 ? scored(score1,++score2,gameRounds) : scored(++score1,score2,gameRounds)))
+.subscribe(({xSpeed, ySpeed}) => ball.attr('cx', getRandomBetween(400,500)).attr('cy', getRandomBetween(250,350)).attr('xSpeed', -1*xSpeed).attr('ySpeed', -1*ySpeed))
 }
 
 function scored(score1: number, score2: number, gameRounds: number) {
-  console.log('resetted the game!')
   const score = document.getElementById("score")!;
-  score.innerHTML = `${score1} ${score2}`;
+  score.innerHTML = `${getEmojiNumber(score1)} : ${getEmojiNumber(score2)}`;
 
   const result = document.getElementById("result")!
   if (score2 == gameRounds) {
-    result.innerHTML = "Congratulations player 2 🤩"
+    result.innerHTML = "Congratulations Player 2 🎉"
   } else if (score1 == gameRounds) {
-    result.innerHTML = "Congratulations player 1 😎"
+    result.innerHTML = "Congratulations Player 1 ✨"
   }
 }
 

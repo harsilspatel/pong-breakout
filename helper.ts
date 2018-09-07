@@ -27,13 +27,10 @@ function isCollision(x: number, bound: number, error: number): boolean {
     return isBetween(x, bound, 0, error); // rangeLength is 0 as we're checking if the object collides with boundary.
 }
 
-function reverseDirection(element: Elem, attributeLabel: string): number {
-    // console.log('reversed ' + attributeLabel);
-    return -1*parseInt(element.attr(attributeLabel))
-    // element.attr(attributeLabel, -1 * parseInt(element.attr(attributeLabel)))
-    // console.log(element.attr(attributeLabel));
-}
 
-// function isColliding(x: number, bound: number, error: number): boolean {
-//     return isBetween(x, bound, bound+error, 0);
-// }
+function getEmojiNumber(n: number): string {
+    const emojiNumbers: string[] = ["0️⃣", "1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣", "9️⃣"];
+    return n.toString().split("") //convert into string and create a list splitting each digit
+            .map(digit => emojiNumbers[(parseInt(digit))]) // mapping to corresponding emoji values
+            .reduce((string, emoji) => string + emoji, "") // concatenating the string
+}

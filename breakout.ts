@@ -4,7 +4,7 @@
 function breakout() {
 
   var speed = 1,
-    lives = 1,
+    lives = 3,
     fps = 5,
     bricks: Elem[] = [];
     const svg = document.getElementById("breakout")!;
@@ -96,7 +96,7 @@ function breakout() {
   }));
 
   const mainObservable = mainInterval
-    .takeUntil(mainInterval.filter(_ => lives == 0))
+    .takeUntil(mainInterval.filter(_ => bricks.length == 0 || lives == 0 ))
     .map(() => ({
       x: parseInt(ball.attr('cx')),
       y: parseInt(ball.attr('cy')),
@@ -127,7 +127,7 @@ function breakout() {
     // resetting the game if ball strikes bottom
   mainObservable
   .filter(({x,y,r}) => isCollision(y+r, Math.floor(svg.getBoundingClientRect().height), parseInt(ball.attr('ySpeed'))))
-  .subscribe(_ => updateAndReset2(--lives, ball))
+  .subscribe(_ => updateAndReset(--lives, ball))
 
 mainObservable
   .map(({x,y,r, xSpeed, ySpeed}) => bricks.map((brick:Elem) => ({ brick, brickX:parseInt(brick.attr('x')), brickY:parseInt(brick.attr('y')), brickWidth: parseInt(brick.attr('width')), brickHeight: parseInt(brick.attr('height'))}))
@@ -135,7 +135,8 @@ mainObservable
     (isBetween(x, brickX, brickWidth, xSpeed) && isCollision(y+r, brickY, ySpeed)) || //top
     (isBetween(x, brickX, brickWidth, xSpeed) && isCollision(y-r, brickY + brickHeight, ySpeed)) //bottom
   )).map(({brick}) => removeAndReverse(bricks, brick, ball,'ySpeed')))
-.subscribe(_ => {})
+  .filter(_ => bricks.length == 0)
+  .subscribe(_ => document.getElementById("lives")!.innerHTML = "Awesome, you won! 🤩")
 
 mainObservable
   .map(({x,y,r, xSpeed, ySpeed}) => bricks.map((brick:Elem) => ({ brick, brickX:parseInt(brick.attr('x')), brickY:parseInt(brick.attr('y')), brickWidth: parseInt(brick.attr('width')), brickHeight: parseInt(brick.attr('height'))}))
@@ -143,9 +144,12 @@ mainObservable
     (isBetween(y, brickY, brickHeight, ySpeed) && isCollision(x+r, brickX, xSpeed)) ||  //left
     (isBetween(y, brickY, brickHeight, ySpeed) && isCollision(x-r, brickX + brickWidth, xSpeed)) //right
   )).map(({brick}) => removeAndReverse(bricks, brick, ball,'xSpeed')))
-.subscribe(_ => {})
+  .filter(_ => bricks.length == 0)
+  .subscribe(_ => document.getElementById("lives")!.innerHTML = "Awesome, you won! 🤩")
 
 }
+
+
 
 function removeAndReverse(bricks:Elem[], brick: Elem, ball: Elem, attributeLabel:string) {
   brick.elem.remove();
@@ -159,18 +163,11 @@ function removeAndReverse(bricks:Elem[], brick: Elem, ball: Elem, attributeLabel
   ball.attr(attributeLabel, -1*parseInt(ball.attr(attributeLabel)))
 }
 
-function endGame2(score1: number, score2: number){
-  const score = document.getElementById("score")!
-  score2 == 5 ?
-    score.innerHTML = "Congratulations player2" :
-    score.innerHTML = "Congratulations player1"
-}
-
-function updateAndReset2(lives: number, ball: Elem) {
+function updateAndReset(lives: number, ball: Elem) {
   console.log('resetted the game!')
   const livesLabel = document.getElementById("lives")!;
-  livesLabel.innerHTML = `lives: ${lives}`;
-  ball.attr('cx', getRandomBetween(400,500)).attr('cy', getRandomBetween(250,350))
+  livesLabel.innerHTML = `Lives: ${"❤️".repeat(lives)}`;
+  ball.attr('cx', getRandomBetween(400,500)).attr('cy', getRandomBetween(250,350)).attr('xSpeed', -1*parseInt(ball.attr('xSpeed')))
 }
 
 // the following simply runs your pong function on window load.  Make sure to leave it in place.
@@ -178,3 +175,4 @@ if (typeof window != 'undefined')
   window.onload = ()=>{
     breakout();
   }
+
