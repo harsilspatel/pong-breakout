@@ -3,17 +3,16 @@
 
 function breakout() {
 
-  var speed = 1,
-    lives = 3,
-    fps = 5,
+  var speed: number = 3,
+    lives: number = 3,
     bricks: Elem[] = [];
-    const svg = document.getElementById("breakout")!;
+    const svg: HTMLElement = document.getElementById("breakout")!;
 
 
-  const bricksObservable = Observable.interval(1);
-  bricksObservable
+  // using observables as loop and populating the bricks
+  const bricksObservable = Observable.interval(1); // declaring the interval seperately and calling the methods seperately because of the reason documented in the
+  bricksObservable                                 // index.html that if two seperate interval observables are used then the inner one might execure quickly.
     .takeUntil(bricksObservable.filter(i => i == 11))
-    // .forEach((i) => console.log(i))
     .forEach(i => (
       bricks.push(
       new Elem(svg, 'rect')
@@ -42,34 +41,23 @@ function breakout() {
       .attr('fill', ('#' + getRandomBetween(0+30,255-30).toString(16) + getRandomBetween(0+30,255-30).toString(16) + getRandomBetween(0+30,255-30).toString(16))) //16777215 being FFFFFF
     )))
     .subscribe(_ => {})
-
-    // bricks.push(
-    //   new Elem(svg, 'rect')
-    //   .attr('x',500)
-    //   .attr('y', 300)
-    //   .attr('width', 200)
-    //   .attr('height', 300)
-    //   .attr('fill', ('#' + getRandomBetween(0+30,255-30).toString(16) + getRandomBetween(0+30,255-30).toString(16) + getRandomBetween(0+30,255-30).toString(16)))
-    // )
     
     
-    
-
-
-  const paddleArea = new Elem(svg, 'rect')
+  const paddleArea: Elem = new Elem(svg, 'rect')
     .attr('width', svg.getBoundingClientRect().width)
     .attr('height', 100)
     .attr('x', 0)
     .attr('y', svg.getBoundingClientRect().height - 100)
     .attr('fill', '#444444')
 
-  let paddle = new Elem(svg, 'rect')
+  let paddle: Elem = new Elem(svg, 'rect')
     .attr('x', 30)
     .attr('y', 580)
     .attr('width', 120)
     .attr('height', 3)
     .attr('fill', '#FFFFFF');
 
+  // observable to make the user control the paddle
   Observable
     .fromEvent<MouseEvent>(svg, "mousemove")
     .map(({clientX, clientY})=>({x: Math.floor(clientX - svg.getBoundingClientRect().left - parseInt(paddle.attr('width'))/2), y: Math.floor(clientY - svg.getBoundingClientRect().top - parseInt(paddle.attr('height'))/2)}))
@@ -77,24 +65,23 @@ function breakout() {
     .filter(({y}) => isBetween(y, svg.getBoundingClientRect().height - 100, 100, 0))
     .subscribe(({x,y}) => paddle.attr('x', x).attr('y', y));
 
-  let ball = new Elem(svg, 'circle')
-  .attr('cx', getRandomBetween(400,500))
-  .attr('cy', getRandomBetween(250,350))
-  .attr('r', 7)
-  .attr('fill', '#FFFFFF')
-  .attr('xSpeed', speed)
-  .attr('ySpeed', speed);
+  let ball: Elem = new Elem(svg, 'circle')
+    .attr('cx', getRandomBetween(400,500))
+    .attr('cy', getRandomBetween(250,350))
+    .attr('r', 7)
+    .attr('fill', '#FFFFFF')
+    .attr('xSpeed', speed)
+    .attr('ySpeed', speed);
 
-  
-
-
-  const mainInterval = Observable.interval(fps)
+  // the mainInterval (or the main clock that ticks)
+  const mainInterval = Observable.interval(10)
   .map(() => ({
     x: parseInt(ball.attr('cx')),
     y: parseInt(ball.attr('cy')),
     r: parseInt(ball.attr('r'))
   }));
 
+  // this is the obervable, which acts like a clock that `ticks`
   const mainObservable = mainInterval
     .takeUntil(mainInterval.filter(_ => bricks.length == 0 || lives == 0 ))
     .map(() => ({
@@ -108,27 +95,27 @@ function breakout() {
 
   // making the ball collide with the paddle
   mainObservable
-  .filter(({x,y,r,xSpeed,ySpeed}) => (isBetween(x, parseInt(paddle.attr('x')), parseInt(paddle.attr('width')), xSpeed) && isCollision(y+r, parseInt(paddle.attr('y')), 2*ySpeed))) //Please note that error here is 2*ySpeed, so that when paddle is being moving towards the ball it can hit it. However, as it is twice the normal error, it may look like the ball is not touching the paddle when striking.  
-  .subscribe(({ySpeed}) =>  ball.attr('ySpeed', -1*ySpeed))
+    .filter(({x,y,r,xSpeed,ySpeed}) => (isBetween(x, parseInt(paddle.attr('x')), parseInt(paddle.attr('width')), xSpeed) && isCollision(y+r, parseInt(paddle.attr('y')), 2*ySpeed))) //Please note that error here is 2*ySpeed, so that when paddle is being moving towards the ball it can hit it. However, as it is twice the normal error, it may look like the ball is not touching the paddle when striking.  
+    .subscribe(({ySpeed}) =>  ball.attr('ySpeed', -1*ySpeed))
 
   // making ball collide with the left and right bounds
   mainObservable
-    .filter(({x,r}) => isCollision(x+r, Math.floor(svg.getBoundingClientRect().width), parseInt(ball.attr('xSpeed'))) || isCollision(x-r, 0, parseInt(ball.attr('xSpeed'))))
+    .filter(({x,r, xSpeed}) => isCollision(x+r, Math.floor(svg.getBoundingClientRect().width), xSpeed) || isCollision(x-r, 0, xSpeed))
     .subscribe(({xSpeed}) => ball.attr('xSpeed', -1*xSpeed))
 
-    // making the ball collide the top
+  // making the ball collide the top
   mainObservable
-    .filter(({y,r}) => isCollision(y-r, 0, parseInt(ball.attr('ySpeed'))))
+    .filter(({y,r, ySpeed}) => isCollision(y-r, 0, ySpeed))
     .subscribe(({ySpeed}) => (ball.attr('ySpeed', -1*ySpeed)))
 
-    // making the ball move
+  // making the ball move
   mainObservable.subscribe(({x, y, xSpeed, ySpeed}) => ball.attr('cx', x+xSpeed).attr('cy',y+ySpeed))
-  
-    // resetting the game if ball strikes bottom
+  // resetting the game if ball strikes bottom
   mainObservable
-  .filter(({x,y,r}) => isCollision(y+r, Math.floor(svg.getBoundingClientRect().height), parseInt(ball.attr('ySpeed'))))
+  .filter(({x,y,r, ySpeed}) => isCollision(y+r, Math.floor(svg.getBoundingClientRect().height), ySpeed))
   .subscribe(_ => updateAndReset(--lives, ball))
 
+// observing if ball collides the top or bottom of the brick, if it does, reverse its y direction
 mainObservable
   .map(({x,y,r, xSpeed, ySpeed}) => bricks.map((brick:Elem) => ({ brick, brickX:parseInt(brick.attr('x')), brickY:parseInt(brick.attr('y')), brickWidth: parseInt(brick.attr('width')), brickHeight: parseInt(brick.attr('height'))}))
   .filter(({brick, brickX, brickY, brickWidth, brickHeight}) => (
@@ -138,6 +125,7 @@ mainObservable
   .filter(_ => bricks.length == 0)
   .subscribe(_ => document.getElementById("lives")!.innerHTML = "Awesome, you won! 🤩")
 
+// observing if ball collides the left or right of the brick, if it does, reverse its x direction
 mainObservable
   .map(({x,y,r, xSpeed, ySpeed}) => bricks.map((brick:Elem) => ({ brick, brickX:parseInt(brick.attr('x')), brickY:parseInt(brick.attr('y')), brickWidth: parseInt(brick.attr('width')), brickHeight: parseInt(brick.attr('height'))}))
   .filter(({brick, brickX, brickY, brickWidth, brickHeight}) => (
@@ -150,27 +138,20 @@ mainObservable
 }
 
 
-
+// an impure function that modifies brick and removes it from svg
 function removeAndReverse(bricks:Elem[], brick: Elem, ball: Elem, attributeLabel:string) {
   brick.elem.remove();
-  // console.log('before' ,bricks.length)
-  let x = bricks.indexOf(brick)
-  // console.log(x)
-
-  bricks.splice(x,1);
-  // console.log('after' ,bricks.length)
-
+  bricks.splice(bricks.indexOf(brick),1); // to pop the brick out of the bricks
   ball.attr(attributeLabel, -1*parseInt(ball.attr(attributeLabel)))
 }
 
+// an inpure function to modify the ball's state and respawn it if the game is resetted
 function updateAndReset(lives: number, ball: Elem) {
-  console.log('resetted the game!')
-  const livesLabel = document.getElementById("lives")!;
-  livesLabel.innerHTML = `Lives: ${"❤️".repeat(lives)}`;
+  document.getElementById("lives")!.innerHTML = (lives == 0? `Sorry, you lost 😥` : `Lives: ${"❤️".repeat(lives)}`);
   ball.attr('cx', getRandomBetween(400,500)).attr('cy', getRandomBetween(250,350)).attr('xSpeed', -1*parseInt(ball.attr('xSpeed')))
 }
 
-// the following simply runs your pong function on window load.  Make sure to leave it in place.
+// the function that calls the main breakout function
 if (typeof window != 'undefined')
   window.onload = ()=>{
     breakout();
