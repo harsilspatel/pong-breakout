@@ -1,6 +1,6 @@
 "use strict";
 function breakout() {
-    var speed = 3, lives = 3, bricks = [];
+    var speed = 2, lives = 3, bricks = [];
     const svg = document.getElementById("breakout");
     const bricksObservable = Observable.interval(1);
     bricksObservable

@@ -3,7 +3,7 @@
 
 function breakout() {
 
-  var speed: number = 3,
+  var speed: number = 2,
     lives: number = 3,
     bricks: Elem[] = [];
     const svg: HTMLElement = document.getElementById("breakout")!;
