@@ -23,7 +23,15 @@ Since both the games are quite similar, as breakout can be thought of as vertica
 
 Described above is a high-level introduction of how the games have been implemented. For a more comprehensive documentation on functions please checkout the code documentation. 
 
+## Screenshots 📸
 
+<img src="screenshots/pong.png">
+
+</br>
+
+<img src="screenshots/breakout.png">
+
+</br>
 
 ## Credits 👏🏻
 Assignment base by [Dr. Tim Dwyer](https://github.com/tgdwyer)
