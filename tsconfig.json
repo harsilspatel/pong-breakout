@@ -7,7 +7,8 @@
         "removeComments": true,
         "preserveConstEnums": true,
         "sourceMap": true,
-        "watch": true
+        "watch": true,
+        "outDir": "dist"
     },
     "include": [ "*.ts" ]
 }
