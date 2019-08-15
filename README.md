@@ -1,6 +1,8 @@
 # pong-breakout
 An exercise to understand the difference between observer pattern and event-driven approach 🏓
 
+Try it out here: https://harsilspatel.github.io/pong-breakout/
+
 
 ## Overview 📜
 
@@ -44,7 +46,7 @@ Thank you [Yang Liew](http://www.dyliew.com/) for all your patience and for stay
 
 
 ## Related 🎮
-Checkout [ohHell](https://github.com/harsilspatel/ohHell), a trick-taking card game in which the objective is to win exactly the number of tricks bid 🃏
+You may also want to checkout [ohHell](https://github.com/harsilspatel/ohHell), a trick-taking card game in which the objective is to win exactly the number of tricks bid 🃏
 
 </br>
 </br>
