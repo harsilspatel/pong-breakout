@@ -36,7 +36,7 @@ Described above is a high-level introduction of how the games have been implemen
 </br>
 
 ## Credits 👏🏻
-Assignment base by [Dr. Tim Dwyer](https://github.com/tgdwyer)
+Assignment base by [Professor Tim Dwyer](https://github.com/tgdwyer)
 
 Props to [Drs. Arthur Maheo](http://arthur.maheo.net/) for being my tutor. If it weren't for your guidance and strictness I wouldn't have had worked as hard or learnt as much. Thank you Arthur! :D
 
