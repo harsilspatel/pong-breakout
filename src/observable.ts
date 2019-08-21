@@ -1,7 +1,7 @@
 interface Observer<Input> {
   next(value: Input): void;
   complete(): void;
-  unsub?: ()=>void;
+  unsub?: () => void;
 }
 
 /**
@@ -15,7 +15,7 @@ class SafeObserver<T> implements Observer<T> {
   // constructor enforces that we are always subscribed to destination
   private isUnsubscribed = false;
   private destination: Observer<T>;
-  
+
   constructor(destination: Observer<T>) {
     this.destination = destination;
     if (destination.unsub) {
@@ -28,7 +28,7 @@ class SafeObserver<T> implements Observer<T> {
    * @param value notification payload
    */
   next(value: T): void {
-    if(!this.isUnsubscribed) {
+    if (!this.isUnsubscribed) {
       this.destination.next(value);
     }
   }
@@ -37,7 +37,7 @@ class SafeObserver<T> implements Observer<T> {
    * terminates the stream.
    */
   complete(): void {
-    if(!this.isUnsubscribed) {
+    if (!this.isUnsubscribed) {
       this.destination.complete();
       this.unsubscribe();
     }
@@ -47,13 +47,13 @@ class SafeObserver<T> implements Observer<T> {
    * clean up at completion
    */
   unsubscribe(): void {
-    if(!this.isUnsubscribed) {
+    if (!this.isUnsubscribed) {
       this.isUnsubscribed = true;
-      if(this.unsub) this.unsub();
+      if (this.unsub) this.unsub();
     }
   }
 
-  unsub?: ()=>void;
+  unsub?: () => void;
 }
 
 /**
@@ -66,7 +66,7 @@ class Observable<Input> {
   /**
    * @param _subscribe subscription function applied to the associated Observer (Observer is created by Observable constructor)
    */
-  constructor(private _subscribe: (_:Observer<Input>)=>()=>void) {}
+  constructor(private _subscribe: (_: Observer<Input>) => () => void) {}
 
   /**
    * Subscribes an observer to this observable
@@ -74,11 +74,11 @@ class Observable<Input> {
    * @param complete action to perform when Observer is completed
    * @return the unsubscribe function
    */
-  subscribe(next:(_:Input)=>void, complete?: ()=>void): ()=>void {
+  subscribe(next: (_: Input) => void, complete?: () => void): () => void {
     const safeObserver = new SafeObserver(<Observer<Input>>{
-        next: next,
-        complete: complete ? complete : ()=>console.log('complete')
-      });
+      next: next,
+      complete: complete ? complete : () => console.log("complete")
+    });
     safeObserver.unsub = this._subscribe(safeObserver);
     return safeObserver.unsubscribe.bind(safeObserver);
   }
@@ -91,10 +91,10 @@ class Observable<Input> {
    */
   static fromEvent<E extends Event>(el: Node, name: string): Observable<E> {
     return new Observable<E>((observer: Observer<E>) => {
-      const listener = <EventListener>((e:E) => observer.next(e));
+      const listener = <EventListener>((e: E) => observer.next(e));
       el.addEventListener(name, listener);
       return () => el.removeEventListener(name, listener);
-    })
+    });
   }
 
   /**
@@ -102,12 +102,12 @@ class Observable<Input> {
    * @param arr array of elements to be passed through Observable
    * @return Observable of the array elements
    */
-  static fromArray<V>(arr: V[]):Observable<V> {
-      return new Observable<V>((observer: Observer<V>) => {
-        arr.forEach(el => observer.next(el));
-        observer.complete();
-        return () => {};
-      });
+  static fromArray<V>(arr: V[]): Observable<V> {
+    return new Observable<V>((observer: Observer<V>) => {
+      arr.forEach(el => observer.next(el));
+      observer.complete();
+      return () => {};
+    });
   }
 
   /**
@@ -116,11 +116,14 @@ class Observable<Input> {
    * @return Observable payload is total elapsed time
    */
   static interval(milliseconds: number): Observable<number> {
-      return new Observable<number>(observer => {
-        let elapsed = 0;
-        const handle = setInterval(() => observer.next(elapsed += milliseconds), milliseconds)
-        return () => clearInterval(handle);
-      })
+    return new Observable<number>(observer => {
+      let elapsed = 0;
+      const handle = setInterval(
+        () => observer.next((elapsed += milliseconds)),
+        milliseconds
+      );
+      return () => clearInterval(handle);
+    });
   }
 
   /**
@@ -128,37 +131,46 @@ class Observable<Input> {
    * @param transform function applied to each input from the upstream Observable
    * @return Observable of the result of transform
    */
-  map<R>(transform: (_:Input)=>R): Observable<R> {
-      return new Observable<R>(observer=> 
-        this.subscribe(e=>observer.next(transform(e)), ()=>observer.complete())
-      );
+  map<R>(transform: (_: Input) => R): Observable<R> {
+    return new Observable<R>(observer =>
+      this.subscribe(
+        e => observer.next(transform(e)),
+        () => observer.complete()
+      )
+    );
   }
 
   /** basically a ``tap'' function applies f to the input and passes that input (unchanged) downstream
    * @param f function applied to each input
    * @return Observable of the unchanged input
    */
-  forEach(f: (_:Input)=>void): Observable<Input> {
-      return new Observable<Input>(observer=>
-        this.subscribe(e=>{
-            f(e);
-            return observer.next(e);
-          }, 
-          () => observer.complete()))
+  forEach(f: (_: Input) => void): Observable<Input> {
+    return new Observable<Input>(observer =>
+      this.subscribe(
+        e => {
+          f(e);
+          return observer.next(e);
+        },
+        () => observer.complete()
+      )
+    );
   }
 
-  /** 
+  /**
    * create a new observable that observes this observable but only conditionally notifies next
    * @param condition filter predicate
    * @return child Observable of only notifications that satisfy the condition
    */
-  filter(condition: (_:Input)=>boolean): Observable<Input> {
-      // Your code here ...
-      return new Observable<Input>(observer => 
-        this.subscribe(e=>{
-            if(condition(e)) observer.next(e)
-          },
-          ()=>observer.complete()));
+  filter(condition: (_: Input) => boolean): Observable<Input> {
+    // Your code here ...
+    return new Observable<Input>(observer =>
+      this.subscribe(
+        e => {
+          if (condition(e)) observer.next(e);
+        },
+        () => observer.complete()
+      )
+    );
   }
 
   /**
@@ -168,29 +180,37 @@ class Observable<Input> {
    */
   takeUntil<V>(o: Observable<V>): Observable<Input> {
     return new Observable<Input>(observer => {
-      const oUnsub = o.subscribe(_=>{
+      const oUnsub = o.subscribe(_ => {
         observer.complete();
         oUnsub();
       });
-      return this.subscribe(e=>observer.next(e), () => {
-        observer.complete();
-        oUnsub();
-      });
-    }); 
+      return this.subscribe(
+        e => observer.next(e),
+        () => {
+          observer.complete();
+          oUnsub();
+        }
+      );
+    });
   }
 
   /**
-   * every time this Observable is notified, create an Observable using the specified stream creator 
+   * every time this Observable is notified, create an Observable using the specified stream creator
    * output is "flattened" into the original stream
    * @param streamCreator function to create the incoming Observable stream
    * @return single ``flattened'' stream from all the created observables
    */
-  flatMap<Output>(streamCreator: (_: Input) => Observable<Output>): Observable<Output> {
-    return new Observable<Output>((observer: Observer<Output>)=>{
-      return this.subscribe(t=>streamCreator(t).subscribe(o=>observer.next(o)),()=>observer.complete())
-    })
+  flatMap<Output>(
+    streamCreator: (_: Input) => Observable<Output>
+  ): Observable<Output> {
+    return new Observable<Output>((observer: Observer<Output>) => {
+      return this.subscribe(
+        t => streamCreator(t).subscribe(o => observer.next(o)),
+        () => observer.complete()
+      );
+    });
   }
-   
+
   /**
    * Similar to Fold or Reduce, but notifies with cumulative result of every input.
    * http://reactivex.io/documentation/operators/scan.html
@@ -198,16 +218,16 @@ class Observable<Input> {
    * @param param binary accumulator function
    * @return Observable stream of V accumulated using the specified fun
    */
-  scan<V>(initialVal:V, fun: (a:V, el:Input) => V): Observable<V> {
+  scan<V>(initialVal: V, fun: (a: V, el: Input) => V): Observable<V> {
     return new Observable<V>((observer: Observer<V>) => {
-        let accumulator = initialVal;
-        return this.subscribe(
-            v => {
-                accumulator = fun(accumulator, v);
-                observer.next(accumulator);
-            },
-            () => observer.complete()
-        )
-    })
+      let accumulator = initialVal;
+      return this.subscribe(
+        v => {
+          accumulator = fun(accumulator, v);
+          observer.next(accumulator);
+        },
+        () => observer.complete()
+      );
+    });
   }
 }

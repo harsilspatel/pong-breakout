@@ -1,4 +1,4 @@
-/** 
+/**
  * a little wrapper for creating SVG elements and getting/setting their attributes
  * and observing their events.
  * inspired by d3.js (http://d3js.org)
@@ -22,10 +22,10 @@ class Elem {
    * @returns called with just the name of the attribute it returns the attribute's current value as a string, called with the name and a new value it sets the attribute and returns this object
    * so subsequent calls can be chained
    */
-  attr(name: string): string 
-  attr(name: string, value: string | number): this
+  attr(name: string): string;
+  attr(name: string, value: string | number): this;
   attr(name: string, value?: string | number): this | string {
-    if (typeof value === 'undefined') {
+    if (typeof value === "undefined") {
       return this.elem.getAttribute(name)!;
     }
     this.elem.setAttribute(name, value.toString());

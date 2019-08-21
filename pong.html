@@ -1,31 +1,46 @@
-<meta charset="UTF-8">
+<meta charset="UTF-8" />
 <html>
-    <head>
-        <style>
-            @import url(style.css);
-            p.highlight {
-                color: red;
-            }
-            svg {
-                background-color: rgb(41, 41, 36);
-            }
-        </style>
-        <script src="./dist/svgelement.js"></script>
-        <script src="./dist/observable.js"></script>
-        <script src="./dist/helper.js"></script>
-        <script src="./dist/pong.js"></script>
-    </head>
-    <body>
-        <h1>Pong 🏓</h1>
-        <div style="width:900px; height: 100;">
-            <p style="text-align:center; color:grey; font-size:80px; font-family:'Times New Roman', Times, serif" id="score">
-                0️⃣ : 0️⃣
-            </p>
-        </div>
+  <head>
+    <style>
+      @import url(style.css);
+      p.highlight {
+        color: red;
+      }
+      svg {
+        background-color: rgb(41, 41, 36);
+      }
+    </style>
+    <script src="./dist/svgelement.js"></script>
+    <script src="./dist/observable.js"></script>
+    <script src="./dist/helper.js"></script>
+    <script src="./dist/pong.js"></script>
+  </head>
+  <body>
+    <h1>Pong 🏓</h1>
+    <div style="width:900px; height: 100;">
+      <p
+        style="text-align:center; color:grey; font-size:80px; font-family:'Times New Roman', Times, serif"
+        id="score"
+      >
+        0️⃣ : 0️⃣
+      </p>
+    </div>
 
-        <svg id="canvas" width="900" height="600"/>
-        <div style="width: 900px;height: 100;">
-            <p style="text-align:center; color:grey; font-size:80px; font-family:'Times New Roman', Times, serif" id="result"></p>
-        </div>
-    </body>
+    <svg id="canvas" width="900" height="600"></svg>
+    <div style="width: 900px;height: 100;">
+      <p
+        style="text-align:center; color:grey; font-size:80px; font-family:'Times New Roman', Times, serif"
+        id="result"
+      ></p>
+    </div>
+    <div style="width: 900px;height: 100;">
+      <p
+        style="color:rgb(172, 119, 233); font-size:18px; font-family:'Times New Roman', Times, serif"
+      >
+        After playing the game for a couple of rounds you'll realise that the
+        ball sometimes doesn't collide with the right paddle.
+
+      </p>
+    </div>
+  </body>
 </html>
