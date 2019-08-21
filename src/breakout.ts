@@ -2,7 +2,7 @@
 // https://docs.google.com/document/d/1woMAgJVf1oL3M49Q8N3E1ykTuTu5_r28_MQPVS5QIVo/edit?usp=sharing
 
 function breakout() {
-  var speed: number = 2,
+  var speed: number = 4,
     lives: number = 3,
     bricks: Elem[] = [];
   const svg: HTMLElement = document.getElementById("breakout")!;

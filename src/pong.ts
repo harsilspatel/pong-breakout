@@ -17,7 +17,7 @@ function pong() {
   const pongStats = {
       score1: 0,
       score2: 0,
-      maxScore: 11
+      maxScore: 3
     },
     svg = document.getElementById("canvas")!;
 
@@ -57,11 +57,11 @@ function pong() {
 
   // the pong ball
   let ball: Elem = new Elem(svg, "circle")
-    .attr("cx", getRandomBetween(400, 500))
-    .attr("cy", getRandomBetween(250, 350))
+    .attr("cx", getRandomBetween(300, 600))
+    .attr("cy", getRandomBetween(200, 400))
     .attr("r", 7)
     .attr("fill", "#FFFFFF")
-    .attr("xSpeed", 3)
+    .attr("xSpeed", 7)
     .attr("ySpeed", 3);
 
   // the observable, which is triggered from mousemove event, that is used to control rightPaddle
